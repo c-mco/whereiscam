@@ -1,0 +1,26 @@
+# Environment & secrets
+.env
+*.local.env
+
+# Binaries
+bin/
+whereiscam
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test artifacts
+*.out
+coverage.html
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*~

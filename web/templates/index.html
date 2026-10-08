@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{if .AtPub}}Cam is at {{.Pub.Name}}!{{else}}Where is Cam?{{end}} - whereis.cam</title>
+  <meta name="description" content="{{if .AtPub}}Cam is currently at {{.Pub.Name}} having a drink.{{else}}Cam's not at a pub. Weird.{{end}}">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <header>
+    <a href="/" class="brand">
+      <img src="/static/favicon.svg" alt="Beer Mug" class="brand-icon">
+      <span>whereis.cam</span>
+    </a>
+  </header>
+
+  <main>
+    <div class="card" id="status-card">
+      {{if .AtPub}}
+        <div class="status-badge at-pub">
+          <span class="pulse-dot"></span>
+          <span>At The Pub</span>
+        </div>
+
+        <div class="icon-display">🍺</div>
+
+        <h1 class="headline">{{.Headline}}</h1>
+        <span class="pub-name">{{.Pub.Name}}</span>
+        <p class="subtext">{{.Subtext}}</p>
+
+        <div class="meta-info">
+          <div class="meta-item">
+            <span>⏱️ Arrived {{.Pub.Duration}} ago</span>
+          </div>
+        </div>
+
+        <div class="actions">
+          <a href="{{.Directions.Primary}}" target="_blank" rel="noopener noreferrer" class="btn-primary">
+            <span>📍 Get Directions (OSM)</span>
+          </a>
+
+          <div class="directions-grid">
+            <a href="{{.Directions.OpenStreetMap}}" target="_blank" rel="noopener noreferrer" class="map-pill" title="OpenStreetMap">
+              <span>🗺️ OSM</span>
+            </a>
+            <a href="{{.Directions.AppleMaps}}" target="_blank" rel="noopener noreferrer" class="map-pill" title="Apple Maps">
+              <span>🍏 Apple</span>
+            </a>
+            <a href="{{.Directions.Citymapper}}" target="_blank" rel="noopener noreferrer" class="map-pill" title="Citymapper">
+              <span>🚇 Citymapper</span>
+            </a>
+            <a href="{{.Directions.GoogleMaps}}" target="_blank" rel="noopener noreferrer" class="map-pill" title="Google Maps">
+              <span>📍 Google</span>
+            </a>
+          </div>
+        </div>
+
+      {{else}}
+        <div class="status-badge not-at-pub">
+          <span class="pulse-dot"></span>
+          <span>Radar Active</span>
+        </div>
+
+        <div class="icon-display">🛋️</div>
+
+        <h1 class="headline">{{.Headline}}</h1>
+        <p class="subtext">{{.Subtext}}</p>
+
+        <div class="actions">
+          <button type="button" onclick="location.reload()" class="btn-primary" style="max-width: 280px;">
+            <span>🔄 Recheck Radar</span>
+          </button>
+        </div>
+
+        {{if .TrackedPubs}}
+          <div class="tracked-pubs-section">
+            <div class="tracked-pubs-header">
+              <span class="radar-dot"></span>
+              <span>Scanning {{len .TrackedPubs}} Local Pubs</span>
+            </div>
+            <div class="pub-chips">
+              {{range .TrackedPubs}}
+                <span class="pub-chip">🍺 {{.Name}}</span>
+              {{end}}
+            </div>
+          </div>
+        {{end}}
+      {{end}}
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-links">
+      <button type="button" class="refresh-btn" onclick="checkStatus(true)">Refresh</button>
+      <span>&bull;</span>
+      <a href="/api/status" target="_blank">JSON API</a>
+      <span>&bull;</span>
+      <a href="https://github.com/c-mco" target="_blank" rel="noopener noreferrer">@c-mco</a>
+    </div>
+    <div class="last-checked" id="last-checked-label">
+      Checked {{.CheckedAt.Format "15:04:05 MST"}} via Home Assistant
+    </div>
+  </footer>
+
+  <script>
+    // Lightweight background status refresher
+    async function checkStatus(force) {
+      try {
+        const url = force ? '/api/status?fresh=1' : '/api/status';
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const data = await res.json();
+        
+        // If state transitioned (went to pub or left pub), reload to update view cleanly
+        const currentAtPub = {{if .AtPub}}true{{else}}false{{end}};
+        if (data.at_pub !== currentAtPub) {
+          location.reload();
+        } else {
+          const lbl = document.getElementById('last-checked-label');
+          if (lbl && data.checked_at) {
+            const d = new Date(data.checked_at);
+            lbl.textContent = 'Checked ' + d.toLocaleTimeString() + ' via Home Assistant';
+          }
+        }
+      } catch (e) {
+        // Silent fail on network hiccup
+      }
+    }
+
+    // Auto-poll every 30 seconds
+    setInterval(() => checkStatus(false), 30000);
+  </script>
+</body>
+</html>
