@@ -17,6 +17,7 @@ type Detector struct {
 	pubZones     map[string]bool
 	iconKeywords []string
 	nameKeywords []string
+	minDwellTime time.Duration
 	random       *rand.Rand
 }
 
@@ -56,6 +57,7 @@ func NewDetector(personEntity string, explicitPubZones []string, iconKeywords []
 		pubZones:     zoneMap,
 		iconKeywords: keywords,
 		nameKeywords: nameKeywords,
+		minDwellTime: 3 * time.Minute,
 		random:       rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 }
@@ -134,12 +136,41 @@ func (d *Detector) Detect(states []homeassistant.EntityState) Status {
 			if since.IsZero() {
 				since = now
 			}
-			duration := formatDuration(now.Sub(since))
-
+			dwell := now.Sub(since)
+			if dwell < 0 {
+				dwell = 0
+			}
+			duration := formatDuration(dwell)
 			directions := BuildDirections(pubName, lat, lon)
 
+			// Walk-by filter: if dwell time is under threshold, Cam may just be walking by
+			if d.minDwellTime > 0 && dwell < d.minDwellTime {
+				return Status{
+					AtPub:      false,
+					SettlingIn: true,
+					Pub: &Pub{
+						Name:      pubName,
+						EntityID:  pubZone.EntityID,
+						Latitude:  lat,
+						Longitude: lon,
+						Address:   ResolvePubAddress(pubName),
+						Icon:      pubZone.Icon(),
+						Since:     since,
+						Duration:  duration,
+						ArrivedAt: formatClockTime(since),
+					},
+					Headline:    fmt.Sprintf("Spotted near %s", pubName),
+					Subtext:     fmt.Sprintf("Cam was just spotted near %s. Radar is verifying if he's pulling up a stool or just walking past...", pubName),
+					Directions:  directions,
+					TrackedPubs: trackedPubs,
+					CheckedAt:   now,
+				}
+			}
+
+			// Confirmed pub visit
 			return Status{
-				AtPub: true,
+				AtPub:      true,
+				SettlingIn: false,
 				Pub: &Pub{
 					Name:      pubName,
 					EntityID:  pubZone.EntityID,
@@ -348,4 +379,10 @@ func ResolvePubAddress(name string) string {
 	default:
 		return name + ", Brunswick VIC"
 	}
+}
+
+// SetMinDwellTime configures the minimum duration the person must reside in a pub zone
+// before confirming they are at the pub (filtering out walk-bys).
+func (d *Detector) SetMinDwellTime(dur time.Duration) {
+	d.minDwellTime = dur
 }

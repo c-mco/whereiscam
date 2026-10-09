@@ -30,6 +30,7 @@ func main() {
 
 	hassClient := homeassistant.NewClient(cfg.HassURL, cfg.HassToken, cfg.CacheTTL)
 	detector := pub.NewDetector(cfg.PersonEntity, cfg.PubZones, cfg.PubIconKeywords)
+	detector.SetMinDwellTime(cfg.MinDwellTime)
 
 	alertsService, err := alerts.NewService(cfg.SubscribersPath, cfg.ResendAPIKey, cfg.ResendFrom, cfg.BaseURL)
 	if err != nil {

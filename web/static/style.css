@@ -1330,3 +1330,15 @@ body {
   color: var(--burnt-orange);
   font-size: 0.75rem;
 }
+
+
+.status-badge.settling-in {
+  background: var(--mustard-yellow);
+  color: var(--mission-brown-dark);
+  border: 2.5px solid var(--mission-brown-dark);
+}
+
+.coaster-frame.settling-in {
+  background: radial-gradient(circle, #fffaf0 0%, #fdeec9 55%, var(--mustard-yellow) 100%);
+  transform: rotate(-1deg);
+}

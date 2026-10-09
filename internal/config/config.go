@@ -24,6 +24,7 @@ type Config struct {
 	BaseURL         string
 	PushSubsPath    string
 	VAPIDKeysPath   string
+	MinDwellTime    time.Duration
 }
 
 // Load reads configuration from environment variables, optionally loading from
@@ -45,6 +46,7 @@ func Load() (*Config, error) {
 		BaseURL:         getEnv("BASE_URL", "https://whereis.cam"),
 		PushSubsPath:    getEnv("PUSH_SUBS_PATH", "data/push_subscriptions.json"),
 		VAPIDKeysPath:   getEnv("VAPID_KEYS_PATH", "data/vapid_keys.json"),
+		MinDwellTime:    3 * time.Minute,
 	}
 
 	if ttlStr := os.Getenv("CACHE_TTL_SECONDS"); ttlStr != "" {
