@@ -294,9 +294,9 @@ func (s *Service) SendWelcomeEmail(sub *Subscriber) {
     <div class="crest">★ whereis.cam ★</div>
     <div class="badge">RADAR ARMED & READY</div>
     <div class="title">You're on the list!</div>
-    <p class="desc">The moment Cam drops in for a pint at any Brunswick pub, you'll be the first to know so you can pull up a stool and say g'day.</p>
+    <p class="desc">The moment Cam drops in for a pint at any pub, you'll be the first to know so you can pull up a stool and say g'day.</p>
     <div class="footer">
-      <p>Sent from Brunswick Pub Radar &bull; <a href="%s">Unsubscribe anytime</a></p>
+      <p>Sent from whereis.cam &bull; <a href="%s">Unsubscribe anytime</a></p>
     </div>
   </div>
 </body>
@@ -359,7 +359,7 @@ func (s *Service) SendPubAlert(pubName, durationStr, mapURL string) {
 <body>
   <div class="card">
     <div class="crest">★ whereis.cam ★</div>
-    <div class="badge">SALOON BAR ACTIVE &bull; CAM IS AT THE PUB</div>
+    <div class="badge">CAM IS AT THE PUB</div>
     <div style="font-size: 16px; color: #3c2214; margin-bottom: 4px;">Cam is having a pint at</div>
     <div class="headline">%s</div>
     <div class="timer">First pot poured at %s</div>

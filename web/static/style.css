@@ -1342,3 +1342,19 @@ body {
   background: radial-gradient(circle, #fffaf0 0%, #fdeec9 55%, var(--mustard-yellow) 100%);
   transform: rotate(-1deg);
 }
+
+
+/* Mobile Bell SVG Strict Sizing Fix */
+.btn-push .push-icon-svg,
+button svg.push-icon-svg,
+.push-icon-svg {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  max-width: 18px !important;
+  min-height: 18px !important;
+  max-height: 18px !important;
+  flex-shrink: 0 !important;
+  display: inline-block !important;
+  vertical-align: middle;
+}

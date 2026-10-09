@@ -192,7 +192,7 @@ func TestIndexHTMLRender(t *testing.T) {
 		"grain-overlay",
 		"amber-glass",
 		"intel-modal",
-		"Saloon Bar Active",
+		"Cam is at the pub!",
 		"coaster-frame",
 	} {
 		if !strings.Contains(body, expected) {

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>{{if .AtPub}}Cam is at {{ .Pub.Name }}! - whereis.cam{{else}}Where's Cam? - whereis.cam{{end}}</title>
-  <meta name="description" content="{{if .AtPub}}Cam is having a pint at {{ .Pub.Name }}. Come pull up a stool and join him!{{else}}Cam frequents plenty of Brunswick pubs. Check which local he's at right now so you can join him for a drink.{{end}}">
+  <meta name="description" content="{{if .AtPub}}Cam is having a pint at {{ .Pub.Name }}. Come pull up a stool and join him!{{else}}Check which pub Cam is at right now so you can join him for a drink.{{end}}">
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
 
   <!-- PWA & Mobile Web App Meta -->
@@ -22,7 +22,7 @@
 </head>
 <body>
   <!-- ── EMBEDDED RETRO SVG SPRITE SHEET (ZERO HTTP REQUESTS, ZERO POP-IN) ── -->
-  <svg xmlns="http://www.w3.org/2000/svg" style="display: none;" aria-hidden="true">
+  <svg xmlns="http://www.w3.org/2000/svg" style="display: none; position: absolute; width: 0; height: 0; overflow: hidden;" aria-hidden="true">
   <defs>
 <radialGradient id="qCoasterGlow" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#FFFDF7" stop-opacity="0.9"/>
@@ -205,22 +205,13 @@
       <div class="screw-rivet screw-bl" aria-hidden="true"></div>
       <div class="screw-rivet screw-br" aria-hidden="true"></div>
 
-      <!-- Integrated Saloon Brass Crest Header -->
+      <!-- Integrated Brass Crest Header -->
       <div class="saloon-crest">
-        <div class="crest-deco-wings" aria-hidden="true">
-          <span class="deco-speedline"></span>
-          <span class="deco-diamond">&#9670;</span>
-          <span class="deco-speedline"></span>
-        </div>
+        <div class="crest-ornament top-ornament" aria-hidden="true"></div>
         <div class="crest-title-group">
           <span class="crest-star">&starf;</span>
           <span class="crest-title">whereis.cam</span>
           <span class="crest-star">&starf;</span>
-        </div>
-        <div class="crest-sub-bar">
-          <span class="crest-vintage">BRUNSWICK SALOON RADAR</span>
-          <span class="crest-bullet">&bull;</span>
-          <span class="crest-vintage">EST. 1973</span>
         </div>
         <div class="crest-ornament bottom-ornament" aria-hidden="true"></div>
       </div>
@@ -230,7 +221,7 @@
         <div class="status-badge-wrap">
           <div class="status-badge at-pub">
             <span class="pulse-dot"></span>
-            <span>Saloon Bar Active &bull; Cam is at the pub!</span>
+            <span>Cam is at the pub!</span>
           </div>
         </div>
 
@@ -317,7 +308,7 @@
         <div class="hero-actions">
           <button type="button" id="sweep-btn" onclick="triggerManualSweep()" class="btn-hero btn-sweep">
             <svg class="btn-icon btn-icon-spin" id="sweep-icon" aria-hidden="true"><use href="#icon-radar-sweep"></use></svg>
-            <span id="sweep-btn-label">Sweep Brunswick Taps</span>
+            <span id="sweep-btn-label">Sweep Taps</span>
           </button>
         </div>
       {{end}}
@@ -330,7 +321,7 @@
             <span>Scanning {{len .TrackedPubs}} Local Pubs &bull; Cam's Haunts</span>
             <span class="deco-star">&loz;</span>
           </div>
-          <p class="haunts-tagline">Cam frequents these Brunswick locals. Tap any address to open in maps:</p>
+          <p class="haunts-tagline">Cam frequents these locals. Tap any address to open in maps:</p>
           <div class="pub-chips">
             {{range .TrackedPubs}}
               <button type="button" class="pub-chip" onclick="openAddressChooser({{.Name}}, {{.Address}}, {{.Latitude}}, {{.Longitude}})" title="Open {{ .Name }} in maps">
@@ -358,7 +349,7 @@
         <!-- Direct Browser & Phone Notifications -->
         <div class="push-alert-card">
           <button type="button" id="push-btn" class="btn-push" onclick="togglePushNotifications()">
-            <svg class="push-icon-svg" aria-hidden="true"><use href="#icon-bell"></use></svg>
+            <svg class="push-icon-svg" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><use href="#icon-bell"></use></svg>
             <span id="push-btn-text">ENABLE NOTIFICATIONS</span>
           </button>
           <div id="push-status-note" class="push-status-note">Direct browser &amp; phone alerts</div>
@@ -694,7 +685,7 @@
       const label = document.getElementById("sweep-btn-label");
 
       if (btn) btn.classList.add("is-scanning");
-      if (label) label.textContent = "Sweeping Brunswick Taps...";
+      if (label) label.textContent = "Sweeping Taps...";
 
       try {
         const res = await fetch("/api/status?fresh=1");
@@ -724,7 +715,7 @@
       } finally {
         setTimeout(() => {
           if (btn) btn.classList.remove("is-scanning");
-          if (label) label.textContent = "Sweep Brunswick Taps";
+          if (label) label.textContent = "Sweep Taps";
           isSweeping = false;
         }, 500);
       }
