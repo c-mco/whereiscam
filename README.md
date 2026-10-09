@@ -70,7 +70,7 @@ whereiscam/
 │       ├── manifest.json         # Standalone PWA web manifest
 │       ├── sw.js                 # Service Worker for push & offline caching
 │       └── style.css             # Responsive Saloon Bar CSS with brass/timber theme
-├── data/                         # Local storage for subscribers & VAPID keys (.gitignored)
+├── data/                         # SQLite database (whereiscam.db) & backups (.gitignored)
 ├── Makefile
 └── README.md
 ```
@@ -108,13 +108,16 @@ PERSON_ENTITY=person.cam
 PORT=8092
 CACHE_TTL_SECONDS=15
 
+# Storage (SQLite)
+DB_PATH=data/whereiscam.db
+
 # Email Alerts (Resend)
 RESEND_API_KEY=re_...
 RESEND_FROM=alerts@whereis.cam
 BASE_URL=https://whereis.cam
-SUBSCRIBERS_PATH=data/subscribers.json
 
-# Web Push Notifications
+# Optional Legacy JSON Paths (for auto-migration to SQLite)
+SUBSCRIBERS_PATH=data/subscribers.json
 PUSH_SUBS_PATH=data/push_subscriptions.json
 VAPID_KEYS_PATH=data/vapid_keys.json
 ```

@@ -25,6 +25,7 @@ type Config struct {
 	PushSubsPath    string
 	VAPIDKeysPath   string
 	MinDwellTime    time.Duration
+	DBPath          string
 }
 
 // Load reads configuration from environment variables, optionally loading from
@@ -47,6 +48,7 @@ func Load() (*Config, error) {
 		PushSubsPath:    getEnv("PUSH_SUBS_PATH", "data/push_subscriptions.json"),
 		VAPIDKeysPath:   getEnv("VAPID_KEYS_PATH", "data/vapid_keys.json"),
 		MinDwellTime:    3 * time.Minute,
+		DBPath:          getEnv("DB_PATH", "data/whereiscam.db"),
 	}
 
 	if ttlStr := os.Getenv("CACHE_TTL_SECONDS"); ttlStr != "" {

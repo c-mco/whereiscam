@@ -421,13 +421,7 @@ func (s *Server) handlePushSubscribe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sub := alerts.PushSubscription{
-		Endpoint: payload.Endpoint,
-		P256DH:   payload.Keys.P256DH,
-		Auth:     payload.Keys.Auth,
-	}
-
-	if err := s.pushService.Subscribe(sub); err != nil {
+	if err := s.pushService.Subscribe(payload.Endpoint, payload.Keys.P256DH, payload.Keys.Auth); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"success": false,

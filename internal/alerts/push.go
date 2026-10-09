@@ -5,22 +5,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"path/filepath"
 	"sync"
 	"time"
 
 	"github.com/SherClockHolmes/webpush-go"
+	"whereis.cam/internal/storage"
 )
-
-// PushSubscription represents a browser push notification registration.
-type PushSubscription struct {
-	Endpoint  string    `json:"endpoint"`
-	P256DH    string    `json:"p256dh"`
-	Auth      string    `json:"auth"`
-	CreatedAt time.Time `json:"created_at"`
-	Active    bool      `json:"active"`
-}
 
 // PushPayload is the JSON structure sent to the browser service worker.
 type PushPayload struct {
@@ -31,35 +21,29 @@ type PushPayload struct {
 	URL   string `json:"url"`
 }
 
-// VAPIDKeys stores the permanent application server keys for Web Push.
-type VAPIDKeys struct {
-	PublicKey  string `json:"public_key"`
-	PrivateKey string `json:"private_key"`
-}
-
-// PushService manages Web Push subscriptions and dispatch.
+// PushService manages Web Push subscriptions and dispatch backed by SQLite.
 type PushService struct {
-	mu           sync.RWMutex
-	filePath     string
-	keysFilePath string
-	subs         map[string]*PushSubscription // keyed by endpoint
-	vapidPub     string
-	vapidPriv    string
-	contactEmail string
-	lastAlertPub string
+	mu            sync.RWMutex
+	db            *storage.DB
+	vapidPub      string
+	vapidPriv     string
+	contactEmail  string
+	lastAlertPub  string
 	lastAlertTime time.Time
 }
 
-// NewPushService initializes Web Push with persistent subscriptions and VAPID keys.
-func NewPushService(filePath, keysFilePath, contactEmail string) (*PushService, error) {
+// NewPushService initializes Web Push with persistent SQLite storage and VAPID keys.
+func NewPushService(db *storage.DB, contactEmail string) (*PushService, error) {
+	if db == nil {
+		return nil, fmt.Errorf("storage database is required")
+	}
+
 	if contactEmail == "" {
 		contactEmail = "admin@whereis.cam"
 	}
 
 	ps := &PushService{
-		filePath:     filePath,
-		keysFilePath: keysFilePath,
-		subs:         make(map[string]*PushSubscription),
+		db:           db,
 		contactEmail: contactEmail,
 	}
 
@@ -67,43 +51,34 @@ func NewPushService(filePath, keysFilePath, contactEmail string) (*PushService, 
 		return nil, fmt.Errorf("failed to init VAPID keys: %w", err)
 	}
 
-	if err := ps.load(); err != nil {
-		return nil, fmt.Errorf("failed to load push subscriptions: %w", err)
-	}
-
 	return ps, nil
 }
 
 func (ps *PushService) loadOrGenerateVAPID() error {
-	dir := filepath.Dir(ps.keysFilePath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return err
-	}
+	pub, _ := ps.db.GetSetting("vapid_public_key")
+	priv, _ := ps.db.GetSetting("vapid_private_key")
 
-	if data, err := os.ReadFile(ps.keysFilePath); err == nil && len(data) > 0 {
-		var keys VAPIDKeys
-		if err := json.Unmarshal(data, &keys); err == nil && keys.PublicKey != "" && keys.PrivateKey != "" {
-			ps.vapidPub = keys.PublicKey
-			ps.vapidPriv = keys.PrivateKey
-			return nil
-		}
+	if pub != "" && priv != "" {
+		ps.vapidPub = pub
+		ps.vapidPriv = priv
+		return nil
 	}
 
 	// Generate new VAPID keys
-	priv, pub, err := webpush.GenerateVAPIDKeys()
+	generatedPriv, generatedPub, err := webpush.GenerateVAPIDKeys()
 	if err != nil {
 		return fmt.Errorf("webpush keygen error: %w", err)
 	}
 
-	keys := VAPIDKeys{
-		PublicKey:  pub,
-		PrivateKey: priv,
+	if err := ps.db.SetSetting("vapid_public_key", generatedPub); err != nil {
+		return err
 	}
-	data, _ := json.MarshalIndent(keys, "", "  ")
-	_ = os.WriteFile(ps.keysFilePath, data, 0600)
+	if err := ps.db.SetSetting("vapid_private_key", generatedPriv); err != nil {
+		return err
+	}
 
-	ps.vapidPub = pub
-	ps.vapidPriv = priv
+	ps.vapidPub = generatedPub
+	ps.vapidPriv = generatedPriv
 	return nil
 }
 
@@ -114,90 +89,24 @@ func (ps *PushService) VAPIDPublicKey() string {
 	return ps.vapidPub
 }
 
-func (ps *PushService) load() error {
-	ps.mu.Lock()
-	defer ps.mu.Unlock()
-
-	if _, err := os.Stat(ps.filePath); os.IsNotExist(err) {
-		return nil
-	}
-
-	data, err := os.ReadFile(ps.filePath)
-	if err != nil {
-		return err
-	}
-
-	var list []PushSubscription
-	if err := json.Unmarshal(data, &list); err != nil {
-		return err
-	}
-
-	for i := range list {
-		s := list[i]
-		ps.subs[s.Endpoint] = &s
-	}
-	return nil
+// Subscribe stores or updates a push subscription in SQLite.
+func (ps *PushService) Subscribe(endpoint, p256dh, auth string) error {
+	return ps.db.SavePushSubscription(endpoint, p256dh, auth)
 }
 
-func (ps *PushService) save() error {
-	dir := filepath.Dir(ps.filePath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return err
-	}
-
-	list := make([]PushSubscription, 0, len(ps.subs))
-	for _, s := range ps.subs {
-		list = append(list, *s)
-	}
-
-	data, err := json.MarshalIndent(list, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(ps.filePath, data, 0644)
-}
-
-// Subscribe stores or updates a push subscription.
-func (ps *PushService) Subscribe(sub PushSubscription) error {
-	if sub.Endpoint == "" || sub.P256DH == "" || sub.Auth == "" {
-		return fmt.Errorf("invalid subscription fields")
-	}
-
-	ps.mu.Lock()
-	defer ps.mu.Unlock()
-
-	sub.CreatedAt = time.Now()
-	sub.Active = true
-	ps.subs[sub.Endpoint] = &sub
-
-	return ps.save()
-}
-
-// Unsubscribe deactivates a push subscription.
+// Unsubscribe deactivates a push subscription in SQLite.
 func (ps *PushService) Unsubscribe(endpoint string) error {
-	ps.mu.Lock()
-	defer ps.mu.Unlock()
-
-	if sub, exists := ps.subs[endpoint]; exists {
-		sub.Active = false
-		return ps.save()
-	}
-	return nil
+	return ps.db.DeactivatePushSubscription(endpoint)
 }
 
 // ActiveSubscriptions returns all currently active push subscriptions.
-func (ps *PushService) ActiveSubscriptions() []PushSubscription {
-	ps.mu.RLock()
-	defer ps.mu.RUnlock()
-
-	var result []PushSubscription
-	for _, sub := range ps.subs {
-		if sub.Active {
-			result = append(result, *sub)
-		}
+func (ps *PushService) ActiveSubscriptions() []storage.PushSubscription {
+	subs, err := ps.db.ActivePushSubscriptions()
+	if err != nil {
+		log.Printf("[PUSH] Error fetching push subscriptions: %v", err)
+		return nil
 	}
-	return result
+	return subs
 }
 
 // Broadcast sends a push notification to all active browser subscriptions.

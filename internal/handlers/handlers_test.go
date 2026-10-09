@@ -12,6 +12,7 @@ import (
 
 	"whereis.cam/internal/homeassistant"
 	"whereis.cam/internal/pub"
+	"whereis.cam/internal/storage"
 )
 
 func createMockServer(camState string, camInZones []string) (*httptest.Server, *Server, error) {
@@ -233,8 +234,13 @@ func TestIndexHTMLRenderWhenNotAtPub(t *testing.T) {
 
 func TestSubscribeAndUnsubscribeEndpoints(t *testing.T) {
 	tmpDir := t.TempDir()
-	filePath := filepath.Join(tmpDir, "subscribers.json")
-	alertsSvc, err := alerts.NewService(filePath, "test-key", "alerts@whereis.cam", "https://whereis.cam")
+	db, err := storage.Open(filepath.Join(tmpDir, "test.db"))
+	if err != nil {
+		t.Fatalf("failed to open storage: %v", err)
+	}
+	defer db.Close()
+
+	alertsSvc, err := alerts.NewService(db, "test-key", "alerts@whereis.cam", "https://whereis.cam")
 	if err != nil {
 		t.Fatalf("failed to create alerts service: %v", err)
 	}

@@ -2,239 +2,103 @@ package alerts
 
 import (
 	"bytes"
-	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"html"
 	"io"
 	"log"
 	"net/http"
-	"net/mail"
-	"os"
-	"path/filepath"
-	"strings"
 	"sync"
 	"time"
+
+	"whereis.cam/internal/storage"
 )
 
-// Subscriber represents a user signed up for pub alerts.
-type Subscriber struct {
-	Email     string    `json:"email"`
-	Token     string    `json:"token"`
-	CreatedAt time.Time `json:"created_at"`
-	Active    bool      `json:"active"`
-}
-
-// Service manages subscriber persistence and email dispatch via Resend.
+// Service coordinates subscriber email alerts via the Resend API backed by SQLite.
 type Service struct {
-	mu              sync.RWMutex
-	filePath        string
-	subscribers     map[string]*Subscriber // keyed by normalized email
-	apiKey          string
+	mu              sync.Mutex
+	db              *storage.DB
+	resendAPIKey    string
 	fromEmail       string
 	baseURL         string
-	httpClient      *http.Client
+	cooldownMinutes int
 	lastAlertPub    string
 	lastAlertTime   time.Time
-	cooldownMinutes int
+	httpClient      *http.Client
 }
 
-// NewService creates a new alerts service.
-func NewService(filePath, apiKey, fromEmail, baseURL string) (*Service, error) {
+// NewService initializes the alerts service with SQLite database and Resend API.
+func NewService(db *storage.DB, resendAPIKey, fromEmail, baseURL string) (*Service, error) {
+	if db == nil {
+		return nil, fmt.Errorf("storage database is required")
+	}
+
 	if fromEmail == "" {
 		fromEmail = "Cam's Pub Radar <alerts@whereis.cam>"
 	}
 	if baseURL == "" {
 		baseURL = "https://whereis.cam"
 	}
-	baseURL = strings.TrimRight(baseURL, "/")
 
 	s := &Service{
-		filePath:        filePath,
-		subscribers:     make(map[string]*Subscriber),
-		apiKey:          apiKey,
+		db:              db,
+		resendAPIKey:    resendAPIKey,
 		fromEmail:       fromEmail,
 		baseURL:         baseURL,
+		cooldownMinutes: 180, // 3 hours anti-spam debounce
 		httpClient:      &http.Client{Timeout: 10 * time.Second},
-		cooldownMinutes: 180, // 3 hours cooldown between alerts for same pub
-	}
-
-	if err := s.load(); err != nil {
-		return nil, fmt.Errorf("failed to load subscribers: %w", err)
 	}
 
 	return s, nil
 }
 
-func (s *Service) load() error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if _, err := os.Stat(s.filePath); os.IsNotExist(err) {
-		return nil
-	}
-
-	data, err := os.ReadFile(s.filePath)
-	if err != nil {
-		return err
-	}
-
-	if len(data) == 0 {
-		return nil
-	}
-
-	var list []Subscriber
-	if err := json.Unmarshal(data, &list); err != nil {
-		return err
-	}
-
-	for i := range list {
-		sub := list[i]
-		s.subscribers[strings.ToLower(sub.Email)] = &sub
-	}
-	return nil
+// Subscribe registers an email address in the database.
+func (s *Service) Subscribe(email string) (storage.Subscriber, bool, error) {
+	return s.db.SubscribeEmail(email)
 }
 
-func (s *Service) save() error {
-	dir := filepath.Dir(s.filePath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return err
-	}
-
-	list := make([]Subscriber, 0, len(s.subscribers))
-	for _, sub := range s.subscribers {
-		list = append(list, *sub)
-	}
-
-	data, err := json.MarshalIndent(list, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(s.filePath, data, 0644)
-}
-
-// NormalizeEmail checks and normalizes an email address.
-func NormalizeEmail(email string) (string, error) {
-	email = strings.TrimSpace(email)
-	addr, err := mail.ParseAddress(email)
-	if err != nil {
-		return "", fmt.Errorf("invalid email address format")
-	}
-	norm := strings.ToLower(addr.Address)
-	if !strings.Contains(norm, ".") {
-		return "", fmt.Errorf("invalid email domain")
-	}
-	return norm, nil
-}
-
-func generateToken() string {
-	b := make([]byte, 16)
-	_, _ = rand.Read(b)
-	return hex.EncodeToString(b)
-}
-
-// Subscribe adds or re-activates an email address.
-// Returns (sub, isNew, error).
-func (s *Service) Subscribe(rawEmail string) (*Subscriber, bool, error) {
-	normEmail, err := NormalizeEmail(rawEmail)
-	if err != nil {
-		return nil, false, err
-	}
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if existing, found := s.subscribers[normEmail]; found {
-		if !existing.Active {
-			existing.Active = true
-			if err := s.save(); err != nil {
-				return nil, false, err
-			}
-			return existing, false, nil
-		}
-		return existing, false, nil
-	}
-
-	sub := &Subscriber{
-		Email:     normEmail,
-		Token:     generateToken(),
-		CreatedAt: time.Now(),
-		Active:    true,
-	}
-	s.subscribers[normEmail] = sub
-
-	if err := s.save(); err != nil {
-		delete(s.subscribers, normEmail)
-		return nil, false, err
-	}
-
-	return sub, true, nil
-}
-
-// Unsubscribe deactivates a subscriber by their secure token.
+// Unsubscribe deactivates a subscription using their token.
 func (s *Service) Unsubscribe(token string) bool {
-	if token == "" {
-		return false
-	}
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	for _, sub := range s.subscribers {
-		if sub.Token == token {
-			if sub.Active {
-				sub.Active = false
-				_ = s.save()
-				return true
-			}
-			return true // already inactive
-		}
-	}
-	return false
+	return s.db.UnsubscribeEmail(token)
 }
 
-// ActiveSubscribers returns all currently subscribed users.
-func (s *Service) ActiveSubscribers() []Subscriber {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+// ActiveSubscribers returns all active email subscribers from SQLite.
 
-	var result []Subscriber
-	for _, sub := range s.subscribers {
-		if sub.Active {
-			result = append(result, *sub)
-		}
-	}
-	return result
-}
-
-// CountActive returns the number of active subscribers.
+// CountActive returns the number of active email subscribers.
 func (s *Service) CountActive() int {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	count := 0
-	for _, sub := range s.subscribers {
-		if sub.Active {
-			count++
-		}
-	}
-	return count
+	return len(s.ActiveSubscribers())
 }
 
-// SendEmail dispatches an email via the Resend API.
+func (s *Service) ActiveSubscribers() []storage.Subscriber {
+	subs, err := s.db.ActiveSubscribers()
+	if err != nil {
+		log.Printf("[ALERTS] Error fetching subscribers: %v", err)
+		return nil
+	}
+	return subs
+}
+
+// resendEmailRequest represents the JSON payload expected by Resend's REST API.
+type resendEmailRequest struct {
+	From    string            `json:"from"`
+	To      []string          `json:"to"`
+	Subject string            `json:"subject"`
+	HTML    string            `json:"html"`
+	Headers map[string]string `json:"headers,omitempty"`
+}
+
+// SendEmail dispatches an HTML email via the Resend API.
 func (s *Service) SendEmail(to, subject, htmlBody string) error {
-	if s.apiKey == "" {
-		log.Printf("[ALERTS] RESEND_API_KEY not set. Simulated sending email to %s: %s", to, subject)
+	if s.resendAPIKey == "" {
+		log.Printf("[ALERTS] RESEND_API_KEY not configured. Simulated dispatch to %s: %s", to, subject)
 		return nil
 	}
 
-	payload := map[string]interface{}{
-		"from":    s.fromEmail,
-		"to":      []string{to},
-		"subject": subject,
-		"html":    htmlBody,
+	payload := resendEmailRequest{
+		From:    s.fromEmail,
+		To:      []string{to},
+		Subject: subject,
+		HTML:    htmlBody,
 	}
 
 	bodyBytes, err := json.Marshal(payload)
@@ -242,12 +106,12 @@ func (s *Service) SendEmail(to, subject, htmlBody string) error {
 		return err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, "https://api.resend.com/emails", bytes.NewBuffer(bodyBytes))
+	req, err := http.NewRequest("POST", "https://api.resend.com/emails", bytes.NewReader(bodyBytes))
 	if err != nil {
 		return err
 	}
 
-	req.Header.Set("Authorization", "Bearer "+s.apiKey)
+	req.Header.Set("Authorization", "Bearer "+s.resendAPIKey)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", "whereis.cam/1.0")
 
@@ -257,7 +121,7 @@ func (s *Service) SendEmail(to, subject, htmlBody string) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode >= 300 {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		respBody, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("resend API error (%d): %s", resp.StatusCode, string(respBody))
 	}
@@ -265,12 +129,8 @@ func (s *Service) SendEmail(to, subject, htmlBody string) error {
 	return nil
 }
 
-// SendWelcomeEmail sends a confirmation email to a newly subscribed user.
-func (s *Service) SendWelcomeEmail(sub *Subscriber) {
-	if sub == nil || !sub.Active {
-		return
-	}
-
+// SendWelcomeEmail dispatches an immediate welcome notification with a 1-click unsubscribe link.
+func (s *Service) SendWelcomeEmail(sub storage.Subscriber) {
 	unsubURL := fmt.Sprintf("%s/unsubscribe?token=%s", s.baseURL, sub.Token)
 	subject := "★ You're on Cam's Pub Radar!"
 
@@ -312,7 +172,7 @@ func (s *Service) SendWelcomeEmail(sub *Subscriber) {
 }
 
 // SendPubAlert checks debounce cooldown and broadcasts alert to all active subscribers.
-func (s *Service) SendPubAlert(pubName, durationStr, mapURL string) {
+func (s *Service) SendPubAlert(pubName, arrivedAtTime, mapURL string) {
 	s.mu.Lock()
 	now := time.Now()
 	// Debounce check
@@ -371,10 +231,10 @@ func (s *Service) SendPubAlert(pubName, durationStr, mapURL string) {
     </div>
   </div>
 </body>
-</html>`, escapedPub, html.EscapeString(durationStr), mapURL, strings.ToUpper(escapedPub), unsubURL)
+</html>`, escapedPub, html.EscapeString(arrivedAtTime), mapURL, escapedPub, unsubURL)
 
 			if err := s.SendEmail(subCopy.Email, subject, htmlBody); err != nil {
-				log.Printf("[ALERTS] Failed sending pub alert to %s: %v", subCopy.Email, err)
+				log.Printf("[ALERTS] Error sending alert to %s: %v", subCopy.Email, err)
 			}
 		}()
 	}

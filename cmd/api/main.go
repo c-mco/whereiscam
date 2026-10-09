@@ -17,6 +17,7 @@ import (
 	"whereis.cam/internal/homeassistant"
 	"whereis.cam/internal/middleware"
 	"whereis.cam/internal/pub"
+	"whereis.cam/internal/storage"
 )
 
 func main() {
@@ -32,12 +33,21 @@ func main() {
 	detector := pub.NewDetector(cfg.PersonEntity, cfg.PubZones, cfg.PubIconKeywords)
 	detector.SetMinDwellTime(cfg.MinDwellTime)
 
-	alertsService, err := alerts.NewService(cfg.SubscribersPath, cfg.ResendAPIKey, cfg.ResendFrom, cfg.BaseURL)
+	store, err := storage.Open(cfg.DBPath)
+	if err != nil {
+		log.Fatalf("Failed to initialize SQLite storage: %v", err)
+	}
+	defer store.Close()
+
+	// Auto-migrate legacy JSON files if database is freshly created
+	store.ImportLegacyJSON(cfg.SubscribersPath, cfg.VAPIDKeysPath, cfg.PushSubsPath)
+
+	alertsService, err := alerts.NewService(store, cfg.ResendAPIKey, cfg.ResendFrom, cfg.BaseURL)
 	if err != nil {
 		log.Printf("Warning: failed to initialize alerts service: %v", err)
 	}
 
-	pushService, err := alerts.NewPushService(cfg.PushSubsPath, cfg.VAPIDKeysPath, cfg.ResendFrom)
+	pushService, err := alerts.NewPushService(store, cfg.ResendFrom)
 	if err != nil {
 		log.Printf("Warning: failed to initialize push service: %v", err)
 	}
