@@ -6,26 +6,49 @@
   <title>{{if .AtPub}}Cam is at {{.Pub.Name}}!{{else}}Where is Cam?{{end}} - whereis.cam</title>
   <meta name="description" content="{{if .AtPub}}Cam is currently at {{.Pub.Name}} having a drink.{{else}}Cam's not at a pub. Weird.{{end}}">
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <!-- 70s Chunky Serif & Art Deco Sans Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Calistoga&family=Josefin+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+  <!-- Tactile Pub Grain Overlay -->
+  <div class="grain-overlay" aria-hidden="true"></div>
 
-  <header>
-    <a href="/" class="brand">
-      <img src="/static/favicon.svg" alt="Beer Mug" class="brand-icon">
-      <span>whereis.cam</span>
-    </a>
+  <!-- Sticky Amber Glass Nav Bar -->
+  <header class="sticky-nav">
+    <div class="nav-bar amber-glass">
+      <a href="/" class="brand">
+        <span class="brand-crest">
+          <img src="/static/favicon.svg" alt="Beer Mug" class="brand-icon">
+        </span>
+        <div class="brand-titles">
+          <span class="brand-name">whereis.cam</span>
+          <span class="brand-tagline">Brunswick Saloon Radar &bull; 1973</span>
+        </div>
+      </a>
+      <div class="nav-controls">
+        <button type="button" class="amber-glass-btn" id="open-modal-btn" aria-label="Pub Intel">
+          <span>🍺 Bar Intel</span>
+        </button>
+      </div>
+    </div>
   </header>
 
   <main>
     <div class="card" id="status-card">
+      <div class="card-deco-trim top-trim" aria-hidden="true"></div>
+
       {{if .AtPub}}
         <div class="status-badge at-pub">
           <span class="pulse-dot"></span>
-          <span>At The Pub</span>
+          <span>Saloon Bar Active</span>
         </div>
 
-        <div class="icon-display">🍺</div>
+        <div class="coaster-frame">
+          <div class="icon-display">🍺</div>
+        </div>
 
         <h1 class="headline">{{.Headline}}</h1>
         <span class="pub-name">{{.Pub.Name}}</span>
@@ -61,16 +84,18 @@
       {{else}}
         <div class="status-badge not-at-pub">
           <span class="pulse-dot"></span>
-          <span>Radar Active</span>
+          <span>Radar Scanning</span>
         </div>
 
-        <div class="icon-display">🛋️</div>
+        <div class="coaster-frame">
+          <div class="icon-display">🛋️</div>
+        </div>
 
         <h1 class="headline">{{.Headline}}</h1>
         <p class="subtext">{{.Subtext}}</p>
 
         <div class="actions">
-          <button type="button" onclick="location.reload()" class="btn-primary" style="max-width: 280px;">
+          <button type="button" onclick="location.reload()" class="btn-primary" style="max-width: 320px;">
             <span>🔄 Recheck Radar</span>
           </button>
         </div>
@@ -78,8 +103,9 @@
         {{if .TrackedPubs}}
           <div class="tracked-pubs-section">
             <div class="tracked-pubs-header">
-              <span class="radar-dot"></span>
+              <span class="deco-star">&loz;</span>
               <span>Scanning {{len .TrackedPubs}} Local Pubs</span>
+              <span class="deco-star">&loz;</span>
             </div>
             <div class="pub-chips">
               {{range .TrackedPubs}}
@@ -89,15 +115,17 @@
           </div>
         {{end}}
       {{end}}
+
+      <div class="card-deco-trim bottom-trim" aria-hidden="true"></div>
     </div>
   </main>
 
   <footer>
-    <div class="footer-links">
+    <div class="footer-links amber-glass-pill">
       <button type="button" class="refresh-btn" onclick="checkStatus(true)">Refresh</button>
-      <span>&bull;</span>
+      <span class="footer-divider">&bull;</span>
       <a href="/api/status" target="_blank">JSON API</a>
-      <span>&bull;</span>
+      <span class="footer-divider">&bull;</span>
       <a href="https://github.com/c-mco" target="_blank" rel="noopener noreferrer">@c-mco</a>
     </div>
     <div class="last-checked" id="last-checked-label">
@@ -105,7 +133,79 @@
     </div>
   </footer>
 
+  <!-- Amber Glass Pub Intel Modal -->
+  <div id="intel-modal" class="modal-overlay" aria-hidden="true" role="dialog" aria-labelledby="modal-title">
+    <div class="modal-card amber-glass">
+      <div class="modal-timber-rail">
+        <div class="modal-header">
+          <div class="pub-plaque-tag">Public Notice &bull; 1973</div>
+          <button type="button" class="modal-close-btn" id="close-modal-btn" aria-label="Close Notice">&times;</button>
+        </div>
+        <h2 id="modal-title" class="modal-title">The Brunswick Saloon</h2>
+        <p class="modal-intro">Automated telemetry monitoring the classic public houses and beer gardens of Brunswick, Victoria.</p>
+        
+        <div class="modal-content-box">
+          <div class="modal-field">
+            <span class="modal-label">Telemetry Source</span>
+            <span class="modal-value">Home Assistant Zone Sensor</span>
+          </div>
+          <div class="modal-field">
+            <span class="modal-label">Brunswick Grid</span>
+            <span class="modal-value">{{if .TrackedPubs}}{{len .TrackedPubs}} Local Pubs Monitored{{else}}Brunswick Public Bar Active{{end}}</span>
+          </div>
+          <div class="modal-field">
+            <span class="modal-label">Pub Hospitality</span>
+            <span class="modal-value">Cold Pots, Bullnose Bars &amp; Timber</span>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <a href="/api/status" target="_blank" class="modal-api-link">View JSON Feed</a>
+          <button type="button" class="modal-done-btn" id="done-modal-btn">Back To The Bar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
+    // Amber Glass Modal Controls
+    const modal = document.getElementById('intel-modal');
+    const openBtn = document.getElementById('open-modal-btn');
+    const closeBtn = document.getElementById('close-modal-btn');
+    const doneBtn = document.getElementById('done-modal-btn');
+
+    function openModal() {
+      if (modal) {
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeModal() {
+      if (modal) {
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+      }
+    }
+
+    if (openBtn) openBtn.addEventListener('click', openModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (doneBtn) doneBtn.addEventListener('click', closeModal);
+
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+      });
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal && modal.classList.contains('is-open')) {
+        closeModal();
+      }
+    });
+
     // Lightweight background status refresher
     async function checkStatus(force) {
       try {

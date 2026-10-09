@@ -92,6 +92,20 @@ func TestStaticCSS(t *testing.T) {
 	if !strings.Contains(rec.Body.String(), "--bg-main") {
 		t.Errorf("expected CSS content with variables, got %s", rec.Body.String()[:100])
 	}
+	for _, expected := range []string{
+		"--burnt-orange",
+		"--mustard-yellow",
+		"--mission-brown-dark",
+		"--font-chunky-serif",
+		"--font-art-deco-sans",
+		".amber-glass",
+		".grain-overlay",
+		"radius-bullnose",
+	} {
+		if !strings.Contains(rec.Body.String(), expected) {
+			t.Errorf("expected CSS to contain %q", expected)
+		}
+	}
 }
 
 func TestStatusAPIWhenNotAtPub(t *testing.T) {
@@ -168,10 +182,49 @@ func TestIndexHTMLRender(t *testing.T) {
 		t.Errorf("expected 200, got %d", rec.Code)
 	}
 	body := rec.Body.String()
-	if !strings.Contains(body, "The Vic") {
-		t.Errorf("expected HTML to contain pub name 'The Vic'")
+	for _, expected := range []string{
+		"The Vic",
+		"whereis.cam",
+		"Calistoga",
+		"Josefin+Sans",
+		"grain-overlay",
+		"amber-glass",
+		"intel-modal",
+		"Saloon Bar Active",
+		"coaster-frame",
+	} {
+		if !strings.Contains(body, expected) {
+			t.Errorf("expected HTML to contain %q", expected)
+		}
 	}
-	if !strings.Contains(body, "whereis.cam") {
-		t.Errorf("expected HTML to contain brand")
+}
+
+func TestIndexHTMLRenderWhenNotAtPub(t *testing.T) {
+	mockHA, srv, err := createMockServer("home", []string{"zone.home"})
+	if err != nil {
+		t.Fatalf("failed to create server: %v", err)
+	}
+	defer mockHA.Close()
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	srv.Handler().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", rec.Code)
+	}
+	body := rec.Body.String()
+	for _, expected := range []string{
+		"whereis.cam",
+		"grain-overlay",
+		"amber-glass",
+		"intel-modal",
+		"Radar Scanning",
+		"coaster-frame",
+		"Scanning 1 Local Pubs",
+	} {
+		if !strings.Contains(body, expected) {
+			t.Errorf("expected HTML to contain %q", expected)
+		}
 	}
 }
