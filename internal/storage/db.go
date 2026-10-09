@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	_ "modernc.org/sqlite"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // Subscriber represents an email subscriber.
@@ -45,7 +45,7 @@ func Open(dbPath string) (*DB, error) {
 		return nil, fmt.Errorf("failed to create db directory: %w", err)
 	}
 
-	conn, err := sql.Open("sqlite", dbPath)
+	conn, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open sqlite database: %w", err)
 	}
