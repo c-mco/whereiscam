@@ -140,37 +140,18 @@ func (d *Detector) Detect(states []homeassistant.EntityState) Status {
 			if dwell < 0 {
 				dwell = 0
 			}
+
+			// Walk-by filter: if dwell time has not reached the threshold, Cam is just walking past
+			if d.minDwellTime > 0 && dwell < d.minDwellTime {
+				continue
+			}
+
 			duration := formatDuration(dwell)
 			directions := BuildDirections(pubName, lat, lon)
 
-			// Walk-by filter: if dwell time is under threshold, Cam may just be walking by
-			if d.minDwellTime > 0 && dwell < d.minDwellTime {
-				return Status{
-					AtPub:      false,
-					SettlingIn: true,
-					Pub: &Pub{
-						Name:      pubName,
-						EntityID:  pubZone.EntityID,
-						Latitude:  lat,
-						Longitude: lon,
-						Address:   ResolvePubAddress(pubName),
-						Icon:      pubZone.Icon(),
-						Since:     since,
-						Duration:  duration,
-						ArrivedAt: formatClockTime(since),
-					},
-					Headline:    fmt.Sprintf("Spotted near %s", pubName),
-					Subtext:     fmt.Sprintf("Cam was just spotted near %s. Radar is verifying if he's pulling up a stool or just walking past...", pubName),
-					Directions:  directions,
-					TrackedPubs: trackedPubs,
-					CheckedAt:   now,
-				}
-			}
-
-			// Confirmed pub visit
+			// Confirmed pub visit (dwell time >= minDwellTime)
 			return Status{
-				AtPub:      true,
-				SettlingIn: false,
+				AtPub: true,
 				Pub: &Pub{
 					Name:      pubName,
 					EntityID:  pubZone.EntityID,

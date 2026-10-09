@@ -39,7 +39,6 @@ type Pub struct {
 // Status represents the evaluated status of whether Cam is at a pub.
 type Status struct {
 	AtPub       bool             `json:"at_pub"`
-	SettlingIn  bool             `json:"settling_in,omitempty"`
 	Pub         *Pub             `json:"pub,omitempty"`
 	Headline    string           `json:"headline"`
 	Subtext     string           `json:"subtext"`

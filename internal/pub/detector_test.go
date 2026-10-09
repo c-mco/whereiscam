@@ -276,15 +276,15 @@ func TestDetectorWalkByFilteredOut(t *testing.T) {
 
 	status := detector.Detect(states)
 
-	// Should NOT declare AtPub yet!
+	// Site must say Cam is NOT at the pub!
 	if status.AtPub {
 		t.Errorf("expected AtPub false for 45s walk-by, got true")
 	}
-	if !status.SettlingIn {
-		t.Errorf("expected SettlingIn true for 45s walk-by, got false")
+	if status.Headline != "Cam's not at a pub. Weird." {
+		t.Errorf("expected headline Cam's not at a pub. Weird., got %q", status.Headline)
 	}
-	if !strings.Contains(status.Headline, "Spotted near") {
-		t.Errorf("expected headline to say Spotted near, got %q", status.Headline)
+	if status.Pub != nil {
+		t.Errorf("expected Pub nil for walk-by, got %v", status.Pub)
 	}
 
 	// Now fast-forward to 4 minutes (confirmed pint)
@@ -294,10 +294,10 @@ func TestDetectorWalkByFilteredOut(t *testing.T) {
 	if !confirmedStatus.AtPub {
 		t.Errorf("expected AtPub true after 4 minutes dwell time, got false")
 	}
-	if confirmedStatus.SettlingIn {
-		t.Errorf("expected SettlingIn false after 4 minutes dwell time, got true")
-	}
 	if confirmedStatus.Headline != "Cam is at the pub!" {
 		t.Errorf("expected confirmed headline, got %q", confirmedStatus.Headline)
+	}
+	if confirmedStatus.Pub == nil || confirmedStatus.Pub.Name != "The Vic" {
+		t.Errorf("expected pub The Vic, got %v", confirmedStatus.Pub)
 	}
 }
