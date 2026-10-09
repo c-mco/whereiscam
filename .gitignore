@@ -12,7 +12,7 @@ whereiscam
 *.dylib
 
 # scripts
-scripts/
+*.plist
 
 # Test artifacts
 *.out
