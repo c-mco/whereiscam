@@ -57,7 +57,7 @@ func NewDetector(personEntity string, explicitPubZones []string, iconKeywords []
 		pubZones:     zoneMap,
 		iconKeywords: keywords,
 		nameKeywords: nameKeywords,
-		minDwellTime: 3 * time.Minute,
+		minDwellTime: 5 * time.Minute,
 		random:       rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 }

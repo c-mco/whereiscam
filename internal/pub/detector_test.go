@@ -268,7 +268,7 @@ func TestFormatDuration(t *testing.T) {
 
 func TestDetectorWalkByFilteredOut(t *testing.T) {
 	detector := NewDetector("person.cam", nil, nil)
-	detector.SetMinDwellTime(3 * time.Minute)
+	detector.SetMinDwellTime(5 * time.Minute)
 
 	// Cam just stepped into zone 45 seconds ago (walking by)
 	states := sampleStates("The Vic", []string{"zone.the_vic"})
@@ -288,11 +288,11 @@ func TestDetectorWalkByFilteredOut(t *testing.T) {
 	}
 
 	// Now fast-forward to 4 minutes (confirmed pint)
-	states[0].LastChanged = time.Now().Add(-4 * time.Minute)
+	states[0].LastChanged = time.Now().Add(-6 * time.Minute)
 	confirmedStatus := detector.Detect(states)
 
 	if !confirmedStatus.AtPub {
-		t.Errorf("expected AtPub true after 4 minutes dwell time, got false")
+		t.Errorf("expected AtPub true after 6 minutes dwell time, got false")
 	}
 	if confirmedStatus.Headline != "Cam is at the pub!" {
 		t.Errorf("expected confirmed headline, got %q", confirmedStatus.Headline)

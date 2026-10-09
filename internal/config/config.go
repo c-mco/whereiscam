@@ -47,7 +47,7 @@ func Load() (*Config, error) {
 		BaseURL:         getEnv("BASE_URL", "https://whereis.cam"),
 		PushSubsPath:    getEnv("PUSH_SUBS_PATH", "data/push_subscriptions.json"),
 		VAPIDKeysPath:   getEnv("VAPID_KEYS_PATH", "data/vapid_keys.json"),
-		MinDwellTime:    3 * time.Minute,
+		MinDwellTime:    5 * time.Minute,
 		DBPath:          getEnv("DB_PATH", "data/whereiscam.db"),
 	}
 
