@@ -252,41 +252,6 @@
           <div class="map-pills-row" style="display:none;" aria-hidden="true"></div>
         </div>
 
-      {{else if .SettlingIn}}
-        <!-- ── WHEN CAM WAS SPOTTED (VERIFYING VISIT VS WALK-BY) ── -->
-        <div class="status-badge-wrap">
-          <div class="status-badge settling-in">
-            <span class="pulse-dot"></span>
-            <span>Radar Verifying &bull; Settling In</span>
-          </div>
-        </div>
-
-        <div class="coaster-wrap">
-          <div class="coaster-frame settling-in" aria-label="Verifying pub visit">
-            <svg class="retro-beer-icon" aria-hidden="true"><use href="#icon-beer-mug"></use></svg>
-          </div>
-        </div>
-
-        <div class="status-intro">Spotted at</div>
-        <h1 class="pub-hero-name">{{.Pub.Name}}</h1>
-
-        <div class="meta-line">
-          <svg class="meta-icon" aria-hidden="true"><use href="#icon-clock-timer"></use></svg>
-          <span>Spotted {{.Pub.Duration}} ago &bull; Holding alerts for 3 mins</span>
-        </div>
-        <p class="pub-subtext">{{.Subtext}}</p>
-
-        <div class="hero-actions">
-          <button type="button" class="btn-hero btn-hero-address" onclick="openAddressChooser('{{.Pub.Name}}', '{{.Pub.Address}}', {{.Pub.Latitude}}, {{.Pub.Longitude}})" aria-label="Open directions to {{.Pub.Name}} at {{.Pub.Address}}">
-            <svg class="btn-icon" aria-hidden="true"><use href="#icon-pin-directions"></use></svg>
-            <div class="hero-address-block">
-              <span class="hero-address-label">{{.Pub.Address}}</span>
-              <span class="hero-address-hint">Choose your preferred maps app &rarr;</span>
-            </div>
-          </button>
-          <div class="map-pills-row" style="display:none;" aria-hidden="true"></div>
-        </div>
-
       {{else}}
         <!-- ── WHEN CAM IS NOT AT A PUB (ABOVE THE FOLD) ── -->
         <div class="status-badge-wrap">

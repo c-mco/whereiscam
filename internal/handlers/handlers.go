@@ -121,33 +121,6 @@ func (s *Server) routes() {
 }
 
 func (s *Server) getStatus(r *http.Request) (pub.Status, error) {
-	if r.URL.Query().Get("mock") == "settling" {
-		status := pub.Status{
-			AtPub:      false,
-			SettlingIn: true,
-			Headline:   "Spotted near The Grandview",
-			Subtext:    "Cam was just spotted near The Grandview. Radar is verifying if he's pulling up a stool or just walking past...",
-			Pub: &pub.Pub{
-				Name:      "The Grandview",
-				EntityID:  "zone.the_grandview",
-				Latitude:  -37.766332,
-				Longitude: 144.948903,
-				Address:   "47 Pearson St, Brunswick West",
-				Duration:  "45s",
-				ArrivedAt: "6:42 PM AEDT",
-			},
-			Directions: pub.BuildDirections("The Grandview", -37.766332, 144.948903),
-			TrackedPubs: []pub.PubSummary{
-				{Name: "CoConspirators", Address: "377 Victoria St, Brunswick", Latitude: -37.766072, Longitude: 144.956689, MapURL: "https://www.google.com/maps/search/?api=1&query=-37.766072,144.956689"},
-				{Name: "Foreigner", Address: "102-104 Victoria St, Brunswick", Latitude: -37.764280, Longitude: 144.954560, MapURL: "https://www.google.com/maps/search/?api=1&query=-37.764280,144.954560"},
-				{Name: "The Grandview", Address: "47 Pearson St, Brunswick West", Latitude: -37.766332, Longitude: 144.948903, MapURL: "https://www.google.com/maps/search/?api=1&query=-37.766332,144.948903"},
-				{Name: "The Union", Address: "109 Union St, Brunswick", Latitude: -37.773434, Longitude: 144.953131, MapURL: "https://www.google.com/maps/search/?api=1&query=-37.773434,144.953131"},
-				{Name: "The Vic", Address: "280 Victoria St, Brunswick", Latitude: -37.766832, Longitude: 144.958952, MapURL: "https://www.google.com/maps/search/?api=1&query=-37.766832,144.958952"},
-			},
-			CheckedAt: time.Now(),
-		}
-		return status, nil
-	}
 	if r.URL.Query().Get("mock") == "pub" {
 		status := pub.Status{
 			AtPub:    true,
