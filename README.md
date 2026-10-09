@@ -2,25 +2,43 @@
 
 Find out which pub Cam is at in real time, powered by Home Assistant.
 
-If Cam is at a pub, the website announces the pub, how long he's been there, and provides one-click directions. If he's not at a pub, it lets friends know: **"Cam's not at a pub. Weird."**
+If Cam is at a pub, the website announces the venue, physical street address, time of first pour, and provides an instant app chooser for turn-by-turn directions. If he's not at a pub, it lets mates know: **"Cam's not at a pub. Weird."**
 
-Built with **pure Go standard library** — zero external third-party packages or runtime dependencies.
+Styled with an authentic **1973 Brunswick Art Deco Saloon Bar** aesthetic — heavy timber bullnose plaque framing, nicotine cream enamel, burnt orange vinyl, mustard yellow coasters, slotted brass corner rivets, and 100% emoji-free custom retro vector iconography.
 
 ---
 
 ## Features
 
-- 📍 **Home Assistant Integration**: Connects directly to `fitz.itspartyti.me` via REST API.
-- 🍻 **Zero-Config Dynamic Pub Discovery**: Add any new pub zone in Home Assistant and it appears automatically! Discovers zones dynamically via:
-  - Drinking/nightlife icons (`mdi:glass-mug-variant`, `mdi:beer`, `mdi:pub`, `mdi:glass-cocktail`, `mdi:wine-glass`, etc.)
-  - Venue keywords in name or entity ID (`pub`, `bar`, `brewery`, `taphouse`, `tavern`, `hotel`, `arms`, `distillery`)
-  - Auto-excludes home zones, shopping centers, and broad suburb boundaries (>500m radius)
-  - Displays a live "Scanning X Local Pubs" roster when Cam is not at a pub.
-- 🗺️ **Un-Googled Directions**: Features **OpenStreetMap** and **Apple Maps** prominently, alongside Citymapper and Google Maps.
-- ⚡ **Zero External Dependencies**: Pure Go stdlib (`net/http`, `html/template`, `embed`, `encoding/json`, `time`).
-- 📦 **Single Self-Contained Binary**: HTML templates, responsive CSS, and SVG icons are embedded directly using Go's `embed.FS`.
-- ⏱️ **In-Memory Cache**: Built-in TTL caching (default 15s) so page visits don't spam Home Assistant.
-- 📡 **Live Updates & JSON API**: Includes `/api/status` for iOS Shortcuts, scripts, or widgets, plus lightweight browser polling.
+- 📍 **Home Assistant Integration**: Connects directly to `fitz.itspartyti.me` via REST API with in-memory TTL caching.
+- 🍻 **Zero-Config Dynamic Pub Discovery**: Discovers drinking zones dynamically in Home Assistant via drink/glass icons, pub/brewery keywords, and zone radii.
+- 🏛️ **1973 Art Deco Saloon Aesthetic**:
+  - Handcrafted slotted brass corner screws, routered gold pinstripes, and vintage cardboard beer coaster frames.
+  - **100% Emoji-Free**: Every icon is a custom retro SVG.
+  - **Embedded SVG Sprite Sheet**: All vector icons are inlined directly in the HTML payload — **0 HTTP network hops, 0ms pop-in delay**.
+  - **Self-Hosted Typography**: Zero third-party font calls (`Calistoga` and `Josefin Sans` served locally as WOFF2).
+  - **WCAG AA Compliant**: All text and button contrasts exceed 4.5:1.
+- 🗺️ **Physical Street Addresses & Universal App Chooser**:
+  - Displays real physical street addresses for venues.
+  - Tapping any address opens a universal action modal allowing users to choose their preferred navigation app:
+    - 🍏 **Apple Maps** (native deep link)
+    - 🗺️ **Google Maps** (turn-by-turn routing)
+    - 🚇 **Citymapper** (transit routing)
+    - 📋 **Copy Address** (1-tap clipboard copy for rideshares or messages)
+- 🔔 **Direct Browser & Phone Notifications (PWA)**:
+  - Standard **Web Push Protocol (RFC 8291/8292)** with server-side **VAPID ECDSA encryption**.
+  - Installable as a standalone PWA on iOS (Add to Home Screen) and Android.
+  - Background Service Worker (`/sw.js`) presents lock-screen notifications even when the browser tab is closed.
+  - 1-tap activation right from the site.
+- ✉️ **Real-Time Email Alerts (Resend API)**:
+  - Friends can subscribe with their email to get notified when Cam hits the pub.
+  - Welcome confirmation email sent instantly upon signup.
+  - **Absolute Clock-Time Arrivals**: Displays exact Melbourne time (`🕒 First pot poured at 6:42 PM AEDT`) so timestamps never become stale in inboxes.
+  - **Single-Click Unsubscribe**: Fully tokenized 1-click unsubscribe links and native RFC `List-Unsubscribe` headers.
+  - **3-Hour Anti-Spam Debounce Cooldown**: Prevents alert fatigue per pub visit.
+- ⏱️ **Background Autonomous Poller**:
+  - Server-side 30s background ticker polls Home Assistant transitions independently of web traffic.
+  - Strict alert isolation: `?mock=pub` preview requests are 100% isolated and never trigger subscriber alerts.
 
 ---
 
@@ -30,38 +48,55 @@ Built with **pure Go standard library** — zero external third-party packages o
 whereiscam/
 ├── cmd/
 │   └── api/
-│       ├── main.go               # Server entry point, graceful shutdown
+│       ├── main.go               # Server entry point, background poller
 │       └── main_test.go          # End-to-end integration tests
 ├── internal/
+│   ├── alerts/                   # Email alerts (Resend API) & Web Push (VAPID)
+│   │   ├── alerts.go             # Subscriber manager, templates, cooldown
+│   │   ├── alerts_test.go
+│   │   ├── push.go               # VAPID keygen, push subscriptions, broadcast
+│   │   └── push_test.go
 │   ├── config/                   # Configuration loader (.env & env vars)
 │   ├── homeassistant/            # HA REST client with in-memory caching
-│   ├── pub/                      # Pub detection logic & directions generator
-│   ├── handlers/                 # HTTP handlers (web page, JSON API, health)
+│   ├── pub/                      # Pub detector, address resolver, directions
+│   ├── handlers/                 # Web, status API, alerts, push, sw.js
 │   └── middleware/               # Logging, panic recovery, security headers
 ├── web/
-│   ├── embed.go                  # embed.FS for templates and static assets
+│   ├── embed.go                  # embed.FS for templates, static assets, fonts
 │   ├── templates/
-│   │   └── index.html            # Responsive HTML template
+│   │   └── index.html            # 1973 Saloon plaque with embedded SVG sprite
 │   └── static/
-│       ├── favicon.svg           # Beer mug SVG icon
-│       └── style.css             # Vanilla CSS with warm pub aesthetic
-├── .env.example                  # Environment variable template
-├── .gitignore
+│       ├── fonts/                # Self-hosted Calistoga & Josefin Sans WOFF2
+│       ├── manifest.json         # Standalone PWA web manifest
+│       ├── sw.js                 # Service Worker for push & offline caching
+│       └── style.css             # Responsive Saloon Bar CSS with brass/timber theme
+├── data/                         # Local storage for subscribers & VAPID keys (.gitignored)
 ├── Makefile
 └── README.md
 ```
 
 ---
 
+## API & Endpoints
+
+| Endpoint | Method | Description |
+| :--- | :--- | :--- |
+| `/` | `GET` | Responsive 1973 Art Deco saloon web interface |
+| `/api/status` | `GET` | Live JSON status (`?fresh=1` bypasses cache) |
+| `/api/alerts/subscribe` | `POST` | Subscribe email for pub arrival alerts |
+| `/unsubscribe?token=...` | `GET` | 1-click tokenized unsubscription page |
+| `/api/push/vapid-public-key`| `GET` | Fetch VAPID public key for browser push |
+| `/api/push/subscribe` | `POST` | Register browser push subscription endpoint |
+| `/api/push/unsubscribe` | `POST` | Deactivate browser push subscription endpoint |
+| `/sw.js` | `GET` | PWA Service Worker script |
+| `/manifest.json` | `GET` | Web App Manifest |
+| `/health` | `GET` | Health check (`{"status":"ok"}`) |
+
+---
+
 ## Configuration
 
-Copy `.env.example` to `.env`:
-
-```bash
-cp .env.example .env
-```
-
-Set your configuration in `.env` (or via system environment variables):
+Set your configuration in `.env` (or via environment variables):
 
 ```env
 # Home Assistant REST API
@@ -70,88 +105,36 @@ HASS_TOKEN=your_long_lived_access_token_here
 PERSON_ENTITY=person.cam
 
 # HTTP Server
-PORT=8080
+PORT=8092
 CACHE_TTL_SECONDS=15
 
-# Optional: override / explicitly restrict pub zones (comma-separated entity IDs)
-# PUB_ZONES=zone.the_vic,zone.foreigner,zone.the_grandview,zone.the_union
+# Email Alerts (Resend)
+RESEND_API_KEY=re_...
+RESEND_FROM=alerts@whereis.cam
+BASE_URL=https://whereis.cam
+SUBSCRIBERS_PATH=data/subscribers.json
+
+# Web Push Notifications
+PUSH_SUBS_PATH=data/push_subscriptions.json
+VAPID_KEYS_PATH=data/vapid_keys.json
 ```
 
 ---
 
 ## Development & Usage
 
-### Run locally
-```bash
-make run
-```
-The server will start at `http://localhost:8080`.
-
-### Build standalone binary
-```bash
-make build
-# Output placed at bin/whereiscam
-./bin/whereiscam
-```
-
-### Run tests
+### Run Tests
 ```bash
 make test
 ```
 
----
-
-## 📚 Documentation & Guides
-
-- [**Contributing & Developer Guide**](CONTRIBUTING.md): Code architecture, zero-dependency philosophy, test suite guidelines, and how to extend the pub detector or map providers.
-- [**DNS & Domain Setup Guide**](DNS_SETUP.md): Configuring DNS records, Cloudflare Tunnel, Caddy/Nginx reverse proxy, and SSL/TLS certificates for `whereis.cam`.
-
----
-
-## API Endpoints
-
-### `GET /`
-Returns the responsive web page showing whether Cam is at a pub.
-
-### `GET /api/status`
-Returns live JSON status:
-
-```json
-{
-  "at_pub": true,
-  "pub": {
-    "name": "The Vic",
-    "entity_id": "zone.the_vic",
-    "latitude": -37.766832,
-    "longitude": 144.958952,
-    "icon": "mdi:glass-mug-variant",
-    "since": "2026-10-08T18:30:00Z",
-    "duration": "45m"
-  },
-  "headline": "Cam is at the pub!",
-  "subtext": "Pints are flowing at The Vic.",
-  "directions": {
-    "primary": "https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=;-37.766832%2C144.958952",
-    "open_street_map": "https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=;-37.766832%2C144.958952",
-    "apple_maps": "https://maps.apple.com/?daddr=-37.766832,144.958952&q=The+Vic",
-    "google_maps": "https://www.google.com/maps/dir/?api=1&destination=-37.766832,144.958952",
-    "citymapper": "https://citymapper.com/directions?endcoord=-37.766832%2C144.958952&endname=The+Vic"
-  },
-  "checked_at": "2026-10-08T19:15:00Z"
-}
+### Build & Run Locally
+```bash
+make build
+./bin/whereiscam
 ```
 
-When not at a pub:
-```json
-{
-  "at_pub": false,
-  "headline": "Cam's not at a pub. Weird.",
-  "subtext": "Checked the taps: all dry. Try again later.",
-  "checked_at": "2026-10-08T19:15:00Z"
-}
+### Visual Regression Tests
+```bash
+npm --prefix /Users/cam/stewart/ui-tests test
 ```
-
-Add `?fresh=1` to bypass the 15-second cache and force a live check against Home Assistant.
-
-### `GET /health`
-Returns `{"status":"ok"}` for health checks and load balancers.

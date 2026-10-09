@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none">
+  <circle cx="12" cy="12" r="9.5" fill="#FFFDF5" stroke="#25140A" stroke-width="2.2"/>
+  <circle cx="12" cy="12" r="7.5" fill="none" stroke="#D4541B" stroke-width="0.8" opacity="0.5"/>
+  <!-- Hour Pips -->
+  <circle cx="12" cy="5" r="0.9" fill="#25140A"/>
+  <circle cx="19" cy="12" r="0.9" fill="#25140A"/>
+  <circle cx="12" cy="19" r="0.9" fill="#25140A"/>
+  <circle cx="5" cy="12" r="0.9" fill="#25140A"/>
+  <!-- Clock Hands (Quarter Past Ten - Pub Time!) -->
+  <path d="M12 12 L9.5 8" stroke="#25140A" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M12 12 L15.5 12" stroke="#D4541B" stroke-width="1.8" stroke-linecap="round"/>
+  <circle cx="12" cy="12" r="1.5" fill="#E5A823"/>
+</svg>

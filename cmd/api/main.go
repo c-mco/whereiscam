@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"whereis.cam/internal/alerts"
 	"whereis.cam/internal/config"
 	"whereis.cam/internal/handlers"
 	"whereis.cam/internal/homeassistant"
@@ -30,10 +31,23 @@ func main() {
 	hassClient := homeassistant.NewClient(cfg.HassURL, cfg.HassToken, cfg.CacheTTL)
 	detector := pub.NewDetector(cfg.PersonEntity, cfg.PubZones, cfg.PubIconKeywords)
 
-	server, err := handlers.NewServer(hassClient, detector)
+	alertsService, err := alerts.NewService(cfg.SubscribersPath, cfg.ResendAPIKey, cfg.ResendFrom, cfg.BaseURL)
+	if err != nil {
+		log.Printf("Warning: failed to initialize alerts service: %v", err)
+	}
+
+	pushService, err := alerts.NewPushService(cfg.PushSubsPath, cfg.VAPIDKeysPath, cfg.ResendFrom)
+	if err != nil {
+		log.Printf("Warning: failed to initialize push service: %v", err)
+	}
+
+	server, err := handlers.NewServer(hassClient, detector, alertsService, pushService)
 	if err != nil {
 		log.Fatalf("Failed to initialize server: %v", err)
 	}
+
+	// Start background watcher to broadcast email alerts autonomously
+	server.StartBackgroundPoller(context.Background(), 30*time.Second)
 
 	// Apply middleware stack
 	handler := server.Handler()

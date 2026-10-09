@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none">
+  <!-- Outer Ring -->
+  <circle cx="12" cy="12" r="9.5" stroke="currentColor" stroke-width="2" stroke-dasharray="3 2" opacity="0.6"/>
+  <!-- Refresh Arrows -->
+  <path d="M20 12 A8 8 0 0 0 6.5 6.5 L4.5 4.5 M4.5 9 V4.5 H9" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M4 12 A8 8 0 0 0 17.5 17.5 L19.5 19.5 M19.5 15 V19.5 H15" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Center Pip -->
+  <circle cx="12" cy="12" r="2" fill="currentColor"/>
+</svg>

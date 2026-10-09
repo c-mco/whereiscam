@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"whereis.cam/internal/alerts"
+	"path/filepath"
 	"time"
 
 	"whereis.cam/internal/homeassistant"
@@ -52,7 +54,7 @@ func createMockServer(camState string, camInZones []string) (*httptest.Server, *
 	hassClient := homeassistant.NewClient(mockHA.URL, "dummy-token", 5*time.Second)
 	detector := pub.NewDetector("person.cam", nil, nil)
 
-	srv, err := NewServer(hassClient, detector)
+	srv, err := NewServer(hassClient, detector, nil, nil)
 	return mockHA, srv, err
 }
 
@@ -185,8 +187,8 @@ func TestIndexHTMLRender(t *testing.T) {
 	for _, expected := range []string{
 		"The Vic",
 		"whereis.cam",
-		"Calistoga",
-		"Josefin+Sans",
+		"calistoga-latin.woff2",
+		"josefinsans-latin.woff2",
 		"grain-overlay",
 		"amber-glass",
 		"intel-modal",
@@ -226,5 +228,55 @@ func TestIndexHTMLRenderWhenNotAtPub(t *testing.T) {
 		if !strings.Contains(body, expected) {
 			t.Errorf("expected HTML to contain %q", expected)
 		}
+	}
+}
+
+func TestSubscribeAndUnsubscribeEndpoints(t *testing.T) {
+	tmpDir := t.TempDir()
+	filePath := filepath.Join(tmpDir, "subscribers.json")
+	alertsSvc, err := alerts.NewService(filePath, "test-key", "alerts@whereis.cam", "https://whereis.cam")
+	if err != nil {
+		t.Fatalf("failed to create alerts service: %v", err)
+	}
+
+	mockHA, srv, err := createMockServer("not_home", []string{})
+	if err != nil {
+		t.Fatalf("createMockServer failed: %v", err)
+	}
+	defer mockHA.Close()
+
+	srv.alertsService = alertsSvc
+
+	// 1. POST /api/alerts/subscribe with valid email
+	body := strings.NewReader(`{"email":"mate@example.com"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/alerts/subscribe", body)
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected 200 OK, got %d. Body: %s", rec.Code, rec.Body.String())
+	}
+
+	subs := alertsSvc.ActiveSubscribers()
+	if len(subs) != 1 {
+		t.Fatalf("expected 1 active subscriber, got %d", len(subs))
+	}
+	token := subs[0].Token
+
+	// 2. GET /unsubscribe?token=...
+	unsubReq := httptest.NewRequest(http.MethodGet, "/unsubscribe?token="+token, nil)
+	unsubRec := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(unsubRec, unsubReq)
+
+	if unsubRec.Code != http.StatusOK {
+		t.Errorf("expected 200 OK from unsubscribe, got %d", unsubRec.Code)
+	}
+	if !strings.Contains(unsubRec.Body.String(), "successfully unsubscribed") {
+		t.Errorf("expected unsub confirmation message in body")
+	}
+
+	if alertsSvc.CountActive() != 0 {
+		t.Errorf("expected 0 active subscribers after unsubscribe, got %d", alertsSvc.CountActive())
 	}
 }

@@ -3,6 +3,7 @@ package pub
 import (
 	"fmt"
 	"math/rand"
+	"net/url"
 	"sort"
 	"strings"
 	"time"
@@ -88,11 +89,18 @@ func (d *Detector) Detect(states []homeassistant.EntityState) Status {
 	for _, z := range pubZones {
 		lat, _ := z.Latitude()
 		lon, _ := z.Longitude()
+		name := z.FriendlyName()
+		mapURL := fmt.Sprintf("https://www.google.com/maps/search/?api=1&query=%s+Brunswick", url.QueryEscape(name))
+		if lat != 0 && lon != 0 {
+			mapURL = fmt.Sprintf("https://www.google.com/maps/search/?api=1&query=%f,%f", lat, lon)
+		}
 		trackedPubs = append(trackedPubs, PubSummary{
-			Name:      z.FriendlyName(),
+			Name:      name,
 			EntityID:  z.EntityID,
 			Latitude:  lat,
 			Longitude: lon,
+			Address:   ResolvePubAddress(name),
+			MapURL:    mapURL,
 		})
 	}
 	sort.Slice(trackedPubs, func(i, j int) bool {
@@ -137,12 +145,14 @@ func (d *Detector) Detect(states []homeassistant.EntityState) Status {
 					EntityID:  pubZone.EntityID,
 					Latitude:  lat,
 					Longitude: lon,
+					Address:   ResolvePubAddress(pubName),
 					Icon:      pubZone.Icon(),
 					Since:     since,
 					Duration:  duration,
+					ArrivedAt: formatClockTime(since),
 				},
 				Headline:    "Cam is at the pub!",
-				Subtext:     fmt.Sprintf("Pints are flowing at %s.", pubName),
+				Subtext:     fmt.Sprintf("Pints are pouring at %s. Pull up a stool and join him!", pubName),
 				Directions:  directions,
 				TrackedPubs: trackedPubs,
 				CheckedAt:   now,
@@ -260,14 +270,13 @@ func (d *Detector) personAtZone(person, zone homeassistant.EntityState) bool {
 
 func (d *Detector) dynamicNotAtPubSubtext(trackedPubs []PubSummary) string {
 	quips := []string{
-		"Checked the taps: all dry. Try again later.",
-		"Currently elsewhere in the universe. Probably Brunswick.",
-		"No pints detected in the immediate vicinity.",
-		"Reports indicate sobriety. Highly irregular.",
-		"Must be between rounds. Or having a coffee.",
-		"Check back around happy hour.",
-		"System diagnostics: Pint levels critically low.",
-		"Nature is healing. Or Cam is having a nap.",
+		"Cam frequents plenty of Brunswick locals, but he is off-duty right now.",
+		"Checked his regular locals: all clear. Check back around happy hour to join him.",
+		"Currently elsewhere in Brunswick. Keep an eye on the radar if you want to catch him for a pint.",
+		"Reports indicate sobriety. Highly irregular for Cam.",
+		"Must be between rounds. Check back soon if you fancy a drink with Cam.",
+		"Check back around happy hour to see which pub he lands at.",
+		"System diagnostics: Pint levels critically low. He is bound to drop in somewhere soon.",
 	}
 
 	count := len(trackedPubs)
@@ -303,4 +312,40 @@ func formatDuration(d time.Duration) string {
 		return fmt.Sprintf("%dh", hours)
 	}
 	return fmt.Sprintf("%dh %dm", hours, mins)
+}
+
+var melbourneLoc *time.Location
+
+func init() {
+	var err error
+	melbourneLoc, err = time.LoadLocation("Australia/Melbourne")
+	if err != nil {
+		melbourneLoc = time.FixedZone("AEDT", 11*60*60)
+	}
+}
+
+func formatClockTime(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return t.In(melbourneLoc).Format("3:04 PM MST")
+}
+
+// ResolvePubAddress returns the street address for known Brunswick pubs or a sensible fallback.
+func ResolvePubAddress(name string) string {
+	lower := strings.ToLower(strings.TrimSpace(name))
+	switch {
+	case strings.Contains(lower, "grandview"):
+		return "47 Pearson St, Brunswick West"
+	case strings.Contains(lower, "coconspirators"):
+		return "377 Victoria St, Brunswick"
+	case strings.Contains(lower, "foreigner"):
+		return "102-104 Victoria St, Brunswick"
+	case strings.Contains(lower, "the union") || lower == "union":
+		return "109 Union St, Brunswick"
+	case strings.Contains(lower, "the vic") || strings.Contains(lower, "victoria hotel"):
+		return "280 Victoria St, Brunswick"
+	default:
+		return name + ", Brunswick VIC"
+	}
 }

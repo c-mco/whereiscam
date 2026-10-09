@@ -1,0 +1,17 @@
+{
+  "name": "whereis.cam - Cam's Pub Radar",
+  "short_name": "whereis.cam",
+  "description": "Live beacon tracking which Brunswick pub Cam is having a pint at.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf4eb",
+  "theme_color": "#231309",
+  "icons": [
+    {
+      "src": "/static/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

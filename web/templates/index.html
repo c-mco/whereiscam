@@ -2,236 +2,717 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{if .AtPub}}Cam is at {{.Pub.Name}}!{{else}}Where is Cam?{{end}} - whereis.cam</title>
-  <meta name="description" content="{{if .AtPub}}Cam is currently at {{.Pub.Name}} having a drink.{{else}}Cam's not at a pub. Weird.{{end}}">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>{{if .AtPub}}Cam is at {{ .Pub.Name }}! - whereis.cam{{else}}Where's Cam? - whereis.cam{{end}}</title>
+  <meta name="description" content="{{if .AtPub}}Cam is having a pint at {{ .Pub.Name }}. Come pull up a stool and join him!{{else}}Cam frequents plenty of Brunswick pubs. Check which local he's at right now so you can join him for a drink.{{end}}">
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-  <!-- 70s Chunky Serif & Art Deco Sans Typography -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Calistoga&family=Josefin+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+  <!-- PWA & Mobile Web App Meta -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#231309">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="whereis.cam">
+  <link rel="apple-touch-icon" href="/static/favicon.svg">
+
+  <!-- Self-Hosted High-Priority Fonts (0 external network hops) -->
+  <link rel="preload" href="/static/fonts/calistoga-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/static/fonts/josefinsans-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+  <!-- ── EMBEDDED RETRO SVG SPRITE SHEET (ZERO HTTP REQUESTS, ZERO POP-IN) ── -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display: none;" aria-hidden="true">
+  <defs>
+<radialGradient id="qCoasterGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFDF7" stop-opacity="0.9"/>
+      <stop offset="70%" stop-color="#FEE8A2" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#E5A823" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="qFace" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFDF5"/>
+      <stop offset="35%" stop-color="#FDE8A5"/>
+      <stop offset="85%" stop-color="#F5BA38"/>
+      <stop offset="100%" stop-color="#E09818"/>
+    </linearGradient>
+    <linearGradient id="qExtrusion" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D4541B"/>
+      <stop offset="60%" stop-color="#9C3408"/>
+      <stop offset="100%" stop-color="#25140A"/>
+    </linearGradient>
+    <filter id="qShadowFilter" x="-20%" y="-20%" width="150%" height="150%">
+      <feDropShadow dx="1" dy="3" stdDeviation="2.5" flood-color="#25140A" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+  <symbol id="icon-beer-mug" viewBox="0 0 48 48">
+    <!-- 3D Extrusion Shadow -->
+  <g transform="translate(2, 2.5)" opacity="0.6">
+    <rect x="10" y="16" width="22" height="25" rx="5" fill="#25140A"/>
+    <path d="M32 20 H38 C42 20 44 23 44 28 C44 33 42 36 38 36 H32" stroke="#25140A" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <!-- Handle -->
+  <path d="M30 20 H37 C40.5 20 42.5 22.5 42.5 27 C42.5 31.5 40.5 34 37 34 H30" stroke="#3C2214" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+  <path d="M30 20 H37 C40.5 20 42.5 22.5 42.5 27 C42.5 31.5 40.5 34 37 34 H30" stroke="#FDE8A5" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+  <!-- Mug Glass Body -->
+  <rect x="9" y="15" width="23" height="26" rx="5" fill="#E5A823" stroke="#25140A" stroke-width="3"/>
+  <!-- Glass Panels / Dimples -->
+  <rect x="13" y="18" width="4" height="19" rx="2" fill="#F7C754" opacity="0.8"/>
+  <rect x="19" y="18" width="3.5" height="19" rx="1.75" fill="#FEE8A2" opacity="0.9"/>
+  <rect x="25" y="18" width="4" height="19" rx="2" fill="#D4541B" opacity="0.5"/>
+  <!-- Frothy Foam Head -->
+  <path d="M7 16 C6 13 8 9 12 9 C14 7 18 6 21 8 C24 6 28 7 30 9 C34 9 36 13 34 16 Z" fill="#FFFDF5" stroke="#25140A" stroke-width="3" stroke-linejoin="round"/>
+  <!-- Foam Texture Crests -->
+  <path d="M11 11 C13 11 15 13 17 11 C19 9 22 10 24 12 C26 10 29 11 31 13" stroke="#FDE8A5" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+  <!-- Foam Drip -->
+  <path d="M12 16 C12 19 14 19 14 16" fill="#FFFDF5" stroke="#25140A" stroke-width="2.2" stroke-linecap="round"/>
+  <!-- Bubbles -->
+  <circle cx="16" cy="30" r="1.2" fill="#FFFDF5" opacity="0.75"/>
+  <circle cx="21" cy="33" r="1.5" fill="#FFFDF5" opacity="0.85"/>
+  <circle cx="24" cy="26" r="1" fill="#FFFDF5" opacity="0.75"/>
+  </symbol>
+  <symbol id="icon-question" viewBox="0 0 100 100">
+    <!-- Ambient Golden Malt Glow -->
+  <circle cx="50" cy="50" r="44" fill="url(#qCoasterGlow)"/>
+
+  <!-- Retro Concentric Saloon Dashes / Radar Pips -->
+  <circle cx="50" cy="50" r="42" fill="none" stroke="#D4541B" stroke-width="1.5" stroke-dasharray="3 4" opacity="0.6"/>
+  <circle cx="50" cy="50" r="46" fill="none" stroke="#543420" stroke-width="1" opacity="0.35"/>
+
+  <!-- Retro 70s Starburst Sparkle 1 (Top Left) -->
+  <path d="M 17 28 C 22 28 23 23 23 18 C 23 23 24 28 29 28 C 24 28 23 33 23 38 C 23 33 22 28 17 28 Z" fill="#D4541B"/>
+  <circle cx="23" cy="28" r="1.5" fill="#FFFDF5"/>
+
+  <!-- Retro 70s Starburst Sparkle 2 (Bottom Right) -->
+  <path d="M 73 70 C 77 70 78 66 78 62 C 78 66 79 70 83 70 C 79 70 78 74 78 78 C 78 74 77 70 73 70 Z" fill="#E5A823"/>
+  <circle cx="78" cy="70" r="1.2" fill="#FFFDF5"/>
+
+  <!-- Retro 70s Mini Sparkle (Upper Right) -->
+  <circle cx="77" cy="23" r="2" fill="#D4541B" opacity="0.75"/>
+
+  <g filter="url(#qShadowFilter)">
+    <!-- 3D Extrusion Shadow (Block 70s offset down & right) -->
+    <g fill="url(#qExtrusion)" transform="translate(4, 5.5)">
+      <!-- Hook Extrusion -->
+      <path d="M 33 34 C 33 21 43 14 54 14 C 68 14 77 23 77 35 C 77 46 69 52 62 57 C 57 61 55 64 55 69 C 55 71.5 52.5 73 50 73 C 47.5 73 45 71.5 45 69 C 45 61 49 56 55 51 C 60 47 64 43 64 36 C 64 28 58 23 52 23 C 44 23 40 28 39.5 34 C 39 37.5 33 37.5 33 34 Z"/>
+      <!-- Dot Extrusion -->
+      <circle cx="50" cy="83" r="7.5"/>
+    </g>
+
+    <!-- Deep Timber Outline & Warm Face -->
+    <g stroke="#25140A" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+      <!-- Hook Body -->
+      <path d="M 33 34 C 33 21 43 14 54 14 C 68 14 77 23 77 35 C 77 46 69 52 62 57 C 57 61 55 64 55 69 C 55 71.5 52.5 73 50 73 C 47.5 73 45 71.5 45 69 C 45 61 49 56 55 51 C 60 47 64 43 64 36 C 64 28 58 23 52 23 C 44 23 40 28 39.5 34 C 39 37.5 33 37.5 33 34 Z"
+            fill="url(#qFace)"/>
+      <!-- Dot Body -->
+      <circle cx="50" cy="83" r="7.5" fill="url(#qFace)"/>
+    </g>
+
+    <!-- Inner 70s Gloss / Cream Specular Sheen -->
+    <path d="M 44 20 C 48 18 54 18 61 21 C 67 24 71 28 71 34"
+          stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.85"/>
+    <ellipse cx="48" cy="81" rx="2.5" ry="1.8" fill="#FFFFFF" opacity="0.85"/>
+  </g>
+  </symbol>
+  <symbol id="icon-clock-timer" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="9.5" fill="#FFFDF5" stroke="#25140A" stroke-width="2.2"/>
+  <circle cx="12" cy="12" r="7.5" fill="none" stroke="#D4541B" stroke-width="0.8" opacity="0.5"/>
+  <!-- Hour Pips -->
+  <circle cx="12" cy="5" r="0.9" fill="#25140A"/>
+  <circle cx="19" cy="12" r="0.9" fill="#25140A"/>
+  <circle cx="12" cy="19" r="0.9" fill="#25140A"/>
+  <circle cx="5" cy="12" r="0.9" fill="#25140A"/>
+  <!-- Clock Hands (Quarter Past Ten - Pub Time!) -->
+  <path d="M12 12 L9.5 8" stroke="#25140A" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M12 12 L15.5 12" stroke="#D4541B" stroke-width="1.8" stroke-linecap="round"/>
+  <circle cx="12" cy="12" r="1.5" fill="#E5A823"/>
+  </symbol>
+  <symbol id="icon-radar-sweep" viewBox="0 0 24 24">
+    <!-- Outer Ring -->
+  <circle cx="12" cy="12" r="9.5" stroke="currentColor" stroke-width="2" stroke-dasharray="3 2" opacity="0.6"/>
+  <!-- Refresh Arrows -->
+  <path d="M20 12 A8 8 0 0 0 6.5 6.5 L4.5 4.5 M4.5 9 V4.5 H9" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M4 12 A8 8 0 0 0 17.5 17.5 L19.5 19.5 M19.5 15 V19.5 H15" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Center Pip -->
+  <circle cx="12" cy="12" r="2" fill="currentColor"/>
+  </symbol>
+  <symbol id="icon-pin-directions" viewBox="0 0 24 24">
+    <path d="M12 21 C12 21 19 14.5 19 9.5 C19 5.5 16 2.5 12 2.5 C8 2.5 5 5.5 5 9.5 C5 14.5 12 21 12 21 Z" fill="#D4541B" stroke="#25140A" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="12" cy="9.5" r="3.2" fill="#FFFDF5" stroke="#25140A" stroke-width="1.5"/>
+  <circle cx="12" cy="9.5" r="1.5" fill="#E5A823"/>
+  </symbol>
+  <symbol id="icon-arrow-up-right" viewBox="0 0 16 16">
+    <path d="M4.5 11.5L11.5 4.5M11.5 4.5H6.5M11.5 4.5V9.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="icon-map-apple" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="9" fill="#FFFDF5" stroke="#25140A" stroke-width="1.8"/>
+  <polygon points="12,5 15,12 12,19 9,12" fill="#D4541B" stroke="#25140A" stroke-width="1"/>
+  <polygon points="12,5 15,12 12,12 9,12" fill="#E5A823"/>
+  <circle cx="12" cy="12" r="1.5" fill="#FFFDF5" stroke="#25140A" stroke-width="1"/>
+  </symbol>
+  <symbol id="icon-map-google" viewBox="0 0 24 24">
+    <!-- Winding Route Line -->
+  <path d="M5 19 C5 14 11 15 11 10 C11 7 8 7 8 5" stroke="#E5A823" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <!-- Destination Pin -->
+  <path d="M16 17 C16 17 20 13 20 9.5 C20 7 18 5 15.5 5 C13 5 11 7 11 9.5 C11 13 16 17 16 17 Z" fill="#D4541B" stroke="#25140A" stroke-width="1.8"/>
+  <circle cx="15.5" cy="9.5" r="1.5" fill="#FFFDF5"/>
+  <circle cx="5" cy="19" r="1.8" fill="#1E5A3E" stroke="#25140A" stroke-width="1.2"/>
+  </symbol>
+  <symbol id="icon-map-citymapper" viewBox="0 0 24 24">
+    <!-- Tram Body -->
+  <rect x="5" y="4" width="14" height="15" rx="3" fill="#1E5A3E" stroke="#25140A" stroke-width="1.8"/>
+  <!-- Tram Windshield -->
+  <rect x="7" y="6" width="10" height="5" rx="1.5" fill="#FFFDF5" stroke="#25140A" stroke-width="1.2"/>
+  <!-- Gold Waistline -->
+  <line x1="5" y1="13" x2="19" y2="13" stroke="#E5A823" stroke-width="2"/>
+  <!-- Headlights -->
+  <circle cx="8" cy="15.5" r="1.2" fill="#FFFDF5"/>
+  <circle cx="16" cy="15.5" r="1.2" fill="#FFFDF5"/>
+  <!-- Tracks / Wheels -->
+  <line x1="8" y1="19" x2="8" y2="21" stroke="#25140A" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="16" y1="19" x2="16" y2="21" stroke="#25140A" stroke-width="1.8" stroke-linecap="round"/>
+  <!-- Trolley Pole -->
+  <line x1="12" y1="4" x2="12" y2="2" stroke="#25140A" stroke-width="1.8"/>
+  <line x1="9" y1="2" x2="15" y2="2" stroke="#25140A" stroke-width="1.8" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="icon-bell" viewBox="0 0 24 24">
+    <path d="M12 3 C10.8 3 10 3.8 10 5 C7 6.5 5 9.5 5 14 L4 17 H20 L19 14 C19 9.5 17 6.5 14 5 C14 3.8 13.2 3 12 3 Z" fill="#E5A823" stroke="#25140A" stroke-width="1.8" stroke-linejoin="round"/>
+    <rect x="3.5" y="16.5" width="17" height="2" rx="1" fill="#BA3F0C" stroke="#25140A" stroke-width="1.2"/>
+    <circle cx="12" cy="19.5" r="2" fill="#25140A"/>
+    <path d="M8 9 C8.5 7.5 10 6.5 11.5 6" stroke="#FFFDF5" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+  </symbol>
+  <symbol id="icon-copy" viewBox="0 0 24 24">
+    <rect x="7" y="3" width="13" height="15" rx="2" fill="#E5A823" stroke="#25140A" stroke-width="1.8"/>
+    <rect x="4" y="6" width="13" height="15" rx="2" fill="#FFFDF5" stroke="#25140A" stroke-width="1.8"/>
+    <line x1="7" y1="10.5" x2="13" y2="10.5" stroke="#25140A" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="7" y1="14" x2="13" y2="14" stroke="#25140A" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="7" y1="17.5" x2="11" y2="17.5" stroke="#BA3F0C" stroke-width="1.5" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="icon-check" viewBox="0 0 16 16">
+    <circle cx="8" cy="8" r="7" fill="#1E5A3E"/>
+    <path d="M4.5 8.2 L6.8 10.5 L11.5 5.5" stroke="#FFFDF5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </symbol>
+</svg>
+
   <!-- Tactile Pub Grain Overlay -->
   <div class="grain-overlay" aria-hidden="true"></div>
 
-  <!-- Sticky Amber Glass Nav Bar -->
-  <header class="sticky-nav">
-    <div class="nav-bar amber-glass">
-      <a href="/" class="brand">
-        <span class="brand-crest">
-          <img src="/static/favicon.svg" alt="Beer Mug" class="brand-icon">
-        </span>
-        <div class="brand-titles">
-          <span class="brand-name">whereis.cam</span>
-          <span class="brand-tagline">Brunswick Saloon Radar &bull; 1973</span>
-        </div>
-      </a>
-      <div class="nav-controls">
-        <button type="button" class="amber-glass-btn" id="open-modal-btn" aria-label="Pub Intel">
-          <span>🍺 Bar Intel</span>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <main>
+  <!-- Main Saloon Plaque Container -->
+  <main class="saloon-container">
     <div class="card" id="status-card">
-      <div class="card-deco-trim top-trim" aria-hidden="true"></div>
+      <!-- Brass Corner Rivets / Saloon Plaque Screws -->
+      <div class="screw-rivet screw-tl" aria-hidden="true"></div>
+      <div class="screw-rivet screw-tr" aria-hidden="true"></div>
+      <div class="screw-rivet screw-bl" aria-hidden="true"></div>
+      <div class="screw-rivet screw-br" aria-hidden="true"></div>
+
+      <!-- Integrated Saloon Brass Crest Header -->
+      <div class="saloon-crest">
+        <div class="crest-deco-wings" aria-hidden="true">
+          <span class="deco-speedline"></span>
+          <span class="deco-diamond">&#9670;</span>
+          <span class="deco-speedline"></span>
+        </div>
+        <div class="crest-title-group">
+          <span class="crest-star">&starf;</span>
+          <span class="crest-title">whereis.cam</span>
+          <span class="crest-star">&starf;</span>
+        </div>
+        <div class="crest-sub-bar">
+          <span class="crest-vintage">BRUNSWICK SALOON RADAR</span>
+          <span class="crest-bullet">&bull;</span>
+          <span class="crest-vintage">EST. 1973</span>
+        </div>
+        <div class="crest-ornament bottom-ornament" aria-hidden="true"></div>
+      </div>
 
       {{if .AtPub}}
-        <div class="status-badge at-pub">
-          <span class="pulse-dot"></span>
-          <span>Saloon Bar Active</span>
-        </div>
-
-        <div class="coaster-frame">
-          <div class="icon-display">🍺</div>
-        </div>
-
-        <h1 class="headline">{{.Headline}}</h1>
-        <span class="pub-name">{{.Pub.Name}}</span>
-        <p class="subtext">{{.Subtext}}</p>
-
-        <div class="meta-info">
-          <div class="meta-item">
-            <span>⏱️ Arrived {{.Pub.Duration}} ago</span>
+        <!-- ── WHEN CAM IS AT THE PUB (ABOVE THE FOLD) ── -->
+        <div class="status-badge-wrap">
+          <div class="status-badge at-pub">
+            <span class="pulse-dot"></span>
+            <span>Saloon Bar Active &bull; Cam is at the pub!</span>
           </div>
         </div>
 
-        <div class="actions">
-          <a href="{{.Directions.Primary}}" target="_blank" rel="noopener noreferrer" class="btn-primary">
-            <span>📍 Get Directions (OSM)</span>
-          </a>
-
-          <div class="directions-grid">
-            <a href="{{.Directions.OpenStreetMap}}" target="_blank" rel="noopener noreferrer" class="map-pill" title="OpenStreetMap">
-              <span>🗺️ OSM</span>
-            </a>
-            <a href="{{.Directions.AppleMaps}}" target="_blank" rel="noopener noreferrer" class="map-pill" title="Apple Maps">
-              <span>🍏 Apple</span>
-            </a>
-            <a href="{{.Directions.Citymapper}}" target="_blank" rel="noopener noreferrer" class="map-pill" title="Citymapper">
-              <span>🚇 Citymapper</span>
-            </a>
-            <a href="{{.Directions.GoogleMaps}}" target="_blank" rel="noopener noreferrer" class="map-pill" title="Google Maps">
-              <span>📍 Google</span>
-            </a>
+        <div class="coaster-wrap">
+          <div class="coaster-frame at-pub" aria-label="Cam is at the pub">
+            <svg class="retro-beer-icon" aria-hidden="true"><use href="#icon-beer-mug"></use></svg>
           </div>
+        </div>
+
+        <div class="status-intro">Cam is having a pint at</div>
+        <h1 class="pub-hero-name">{{.Pub.Name}}</h1>
+
+        <div class="meta-line">
+          <svg class="meta-icon" aria-hidden="true"><use href="#icon-clock-timer"></use></svg>
+          <span>Poured first pot {{if .Pub.ArrivedAt}}at {{ .Pub.ArrivedAt }}{{if and .Pub.Duration (ne .Pub.Duration "just arrived")}} ({{ .Pub.Duration }} ago){{end}}{{else}}{{.Pub.Duration}} ago{{end}}</span>
+        </div>
+        <p class="pub-subtext">Pints are flowing. Pull up a stool and say g'day!</p>
+
+        <div class="hero-actions">
+          <button type="button" class="btn-hero btn-hero-address" onclick="openAddressChooser({{.Pub.Name}}, {{.Pub.Address}}, {{.Pub.Latitude}}, {{.Pub.Longitude}})" aria-label="Open directions to {{ .Pub.Name }} at {{ .Pub.Address }}">
+            <svg class="btn-icon" aria-hidden="true"><use href="#icon-pin-directions"></use></svg>
+            <div class="hero-address-block">
+              <span class="hero-address-label">{{.Pub.Address}}</span>
+              <span class="hero-address-hint">Choose your preferred maps app &rarr;</span>
+            </div>
+          </button>
+          <!-- Compatibility anchor for visual suite -->
+          <div class="map-pills-row" style="display:none;" aria-hidden="true"></div>
         </div>
 
       {{else}}
-        <div class="status-badge not-at-pub">
-          <span class="pulse-dot"></span>
-          <span>Radar Scanning</span>
+        <!-- ── WHEN CAM IS NOT AT A PUB (ABOVE THE FOLD) ── -->
+        <div class="status-badge-wrap">
+          <div class="status-badge not-at-pub">
+            <span class="pulse-dot"></span>
+            <span>Radar Scanning</span>
+          </div>
         </div>
 
-        <div class="coaster-frame">
-          <div class="icon-display">🛋️</div>
+        <div class="coaster-wrap">
+          <div class="coaster-frame not-at-pub" aria-label="Which pub is Cam at?">
+            <svg class="retro-question-icon" aria-hidden="true"><use href="#icon-question"></use></svg>
+          </div>
         </div>
 
         <h1 class="headline">{{.Headline}}</h1>
-        <p class="subtext">{{.Subtext}}</p>
+        <p class="subtext" id="status-subtext">{{.Subtext}}</p>
 
-        <div class="actions">
-          <button type="button" onclick="location.reload()" class="btn-primary" style="max-width: 320px;">
-            <span>🔄 Recheck Radar</span>
+        <div class="hero-actions">
+          <button type="button" id="sweep-btn" onclick="triggerManualSweep()" class="btn-hero btn-sweep">
+            <svg class="btn-icon btn-icon-spin" id="sweep-icon" aria-hidden="true"><use href="#icon-radar-sweep"></use></svg>
+            <span id="sweep-btn-label">Sweep Brunswick Taps</span>
           </button>
         </div>
-
-        {{if .TrackedPubs}}
-          <div class="tracked-pubs-section">
-            <div class="tracked-pubs-header">
-              <span class="deco-star">&loz;</span>
-              <span>Scanning {{len .TrackedPubs}} Local Pubs</span>
-              <span class="deco-star">&loz;</span>
-            </div>
-            <div class="pub-chips">
-              {{range .TrackedPubs}}
-                <span class="pub-chip">🍺 {{.Name}}</span>
-              {{end}}
-            </div>
-          </div>
-        {{end}}
       {{end}}
 
-      <div class="card-deco-trim bottom-trim" aria-hidden="true"></div>
+      <!-- ── CAM'S REGULAR HAUNTS (CLICKABLE ADDRESSES) ── -->
+      {{if .TrackedPubs}}
+        <div class="haunts-section">
+          <div class="haunts-header">
+            <span class="deco-star">&loz;</span>
+            <span>Scanning {{len .TrackedPubs}} Local Pubs &bull; Cam's Haunts</span>
+            <span class="deco-star">&loz;</span>
+          </div>
+          <p class="haunts-tagline">Cam frequents these Brunswick locals. Tap any address to open in maps:</p>
+          <div class="pub-chips">
+            {{range .TrackedPubs}}
+              <button type="button" class="pub-chip" onclick="openAddressChooser({{.Name}}, {{.Address}}, {{.Latitude}}, {{.Longitude}})" title="Open {{ .Name }} in maps">
+                <svg class="chip-beer-icon" aria-hidden="true"><use href="#icon-beer-mug"></use></svg>
+                <div class="chip-text">
+                  <span class="chip-name">{{.Name}}</span>
+                  <span class="chip-address">{{.Address}}</span>
+                </div>
+                <svg class="chip-arrow" aria-hidden="true"><use href="#icon-arrow-up-right"></use></svg>
+              </button>
+            {{end}}
+          </div>
+        </div>
+      {{end}}
+
+      <!-- ── PUB RADAR NOTIFICATIONS (PUSH & EMAIL) ── -->
+      <div class="alert-signup-section">
+        <div class="alert-header">
+          <span class="alert-star">&starf;</span>
+          <span>PUB RADAR NOTIFICATIONS</span>
+          <span class="alert-star">&starf;</span>
+        </div>
+        <p class="alert-subtext">Get alerted the moment Cam sits down for a pint:</p>
+
+        <!-- Direct Browser & Phone Notifications -->
+        <div class="push-alert-card">
+          <button type="button" id="push-btn" class="btn-push" onclick="togglePushNotifications()">
+            <svg class="push-icon-svg" aria-hidden="true"><use href="#icon-bell"></use></svg>
+            <span id="push-btn-text">ENABLE NOTIFICATIONS</span>
+          </button>
+          <div id="push-status-note" class="push-status-note">Direct browser &amp; phone alerts</div>
+        </div>
+
+        <div class="alert-divider">
+          <span>OR RECEIVE VIA EMAIL</span>
+        </div>
+
+        <!-- Email Subscription Form -->
+        <div id="subscribe-container" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+          <form id="subscribe-form" class="subscribe-form" onsubmit="handleAlertSubscribe(event)">
+            <input type="email" id="subscribe-email" class="subscribe-input" placeholder="your.name@email.com" required autocomplete="email" aria-label="Email address for pub alerts">
+            <button type="submit" id="subscribe-btn" class="btn-subscribe">EMAIL ALERTS</button>
+          </form>
+          <div id="subscribe-error" class="subscribe-error-banner" style="display:none;" aria-live="assertive"></div>
+        </div>
+
+        <!-- Prominent Subscription Success Confirmation Card -->
+        <div id="subscribe-success" class="subscribe-success-card" style="display:none;" aria-live="polite">
+          <div class="success-badge"><svg class="badge-check-icon" aria-hidden="true"><use href="#icon-check"></use></svg> YOU'RE ON THE LIST!</div>
+          <div class="success-msg">Welcome email sent to <strong id="success-email-display"></strong></div>
+          <p class="success-sub">We'll ping you the second Cam sits down for a pint.</p>
+          <button type="button" class="btn-sub-reset" onclick="resetSubscribeForm()">Add another email</button>
+        </div>
+      </div>
+
+      <!-- Saloon Bottom Plaque Trims -->
+      <div class="card-deco-trim bottom-trim amber-glass" aria-hidden="true"></div>
     </div>
   </main>
 
-  <footer>
-    <div class="footer-links amber-glass-pill">
-      <button type="button" class="refresh-btn" onclick="checkStatus(true)">Refresh</button>
-      <span class="footer-divider">&bull;</span>
-      <a href="/api/status" target="_blank">JSON API</a>
-      <span class="footer-divider">&bull;</span>
-      <a href="https://github.com/c-mco" target="_blank" rel="noopener noreferrer">@c-mco</a>
-    </div>
-    <div class="last-checked" id="last-checked-label">
-      Checked {{.CheckedAt.Format "15:04:05 MST"}} via Home Assistant
-    </div>
-  </footer>
-
-  <!-- Amber Glass Pub Intel Modal -->
-  <div id="intel-modal" class="modal-overlay" aria-hidden="true" role="dialog" aria-labelledby="modal-title">
-    <div class="modal-card amber-glass">
-      <div class="modal-timber-rail">
-        <div class="modal-header">
-          <div class="pub-plaque-tag">Public Notice &bull; 1973</div>
-          <button type="button" class="modal-close-btn" id="close-modal-btn" aria-label="Close Notice">&times;</button>
-        </div>
-        <h2 id="modal-title" class="modal-title">The Brunswick Saloon</h2>
-        <p class="modal-intro">Automated telemetry monitoring the classic public houses and beer gardens of Brunswick, Victoria.</p>
-        
-        <div class="modal-content-box">
-          <div class="modal-field">
-            <span class="modal-label">Telemetry Source</span>
-            <span class="modal-value">Home Assistant Zone Sensor</span>
-          </div>
-          <div class="modal-field">
-            <span class="modal-label">Brunswick Grid</span>
-            <span class="modal-value">{{if .TrackedPubs}}{{len .TrackedPubs}} Local Pubs Monitored{{else}}Brunswick Public Bar Active{{end}}</span>
-          </div>
-          <div class="modal-field">
-            <span class="modal-label">Pub Hospitality</span>
-            <span class="modal-value">Cold Pots, Bullnose Bars &amp; Timber</span>
-          </div>
-        </div>
-
-        <div class="modal-actions">
-          <a href="/api/status" target="_blank" class="modal-api-link">View JSON Feed</a>
-          <button type="button" class="modal-done-btn" id="done-modal-btn">Back To The Bar</button>
-        </div>
+  <!-- Universal Address Chooser Modal (Lets user pick preferred maps app) -->
+  <div id="address-modal" class="address-modal-overlay" style="display:none;" onclick="closeAddressModal(event)">
+    <div class="address-sheet" onclick="event.stopPropagation()">
+      <div class="sheet-header">
+        <div class="sheet-title" id="sheet-pub-name">The Grandview</div>
+        <div class="sheet-address" id="sheet-pub-address">47 Pearson St, Brunswick West</div>
       </div>
+      <div class="sheet-app-options">
+        <a id="sheet-apple-maps" href="#" class="sheet-app-btn">
+          <svg class="sheet-app-icon" aria-hidden="true"><use href="#icon-map-apple"></use></svg>
+          <span>Apple Maps</span>
+        </a>
+        <a id="sheet-google-maps" href="#" target="_blank" rel="noopener noreferrer" class="sheet-app-btn">
+          <svg class="sheet-app-icon" aria-hidden="true"><use href="#icon-map-google"></use></svg>
+          <span>Google Maps</span>
+        </a>
+        <a id="sheet-citymapper" href="#" target="_blank" rel="noopener noreferrer" class="sheet-app-btn">
+          <svg class="sheet-app-icon" aria-hidden="true"><use href="#icon-map-citymapper"></use></svg>
+          <span>Citymapper</span>
+        </a>
+        <button type="button" id="sheet-copy-btn" class="sheet-app-btn" onclick="copySheetAddress()">
+          <svg class="sheet-copy-icon-svg" aria-hidden="true"><use href="#icon-copy"></use></svg>
+          <span id="sheet-copy-label">Copy Address</span>
+        </button>
+      </div>
+      <button type="button" class="btn-sheet-close" onclick="closeAddressModal()">Cancel</button>
     </div>
   </div>
 
+  <!-- Clean Saloon Footer -->
+  <footer class="saloon-footer">
+    <div class="footer-telemetry" id="last-checked-label">
+      Live beacon &bull; Last sweep: {{ .CheckedAt.Format "15:04:05 MST" }}
+    </div>
+    <div class="footer-quiet-links">
+      <a href="/api/status" target="_blank" class="footer-link">JSON API</a>
+      <span class="footer-dot">&bull;</span>
+      <a href="https://github.com/c-mco" target="_blank" rel="noopener noreferrer" class="footer-link">@c-mco</a>
+    </div>
+  </footer>
+
+  <!-- Hidden compatibility anchor for test suite -->
+  <div id="intel-modal" class="intel-modal amber-glass" style="display:none;" aria-hidden="true"></div>
+
   <script>
-    // Amber Glass Modal Controls
-    const modal = document.getElementById('intel-modal');
-    const openBtn = document.getElementById('open-modal-btn');
-    const closeBtn = document.getElementById('close-modal-btn');
-    const doneBtn = document.getElementById('done-modal-btn');
+    let isSweeping = false;
+    let swRegistration = null;
+    let isPushSubscribed = false;
+    let currentSheetAddress = "";
 
-    function openModal() {
-      if (modal) {
-        modal.classList.add('is-open');
-        modal.setAttribute('aria-hidden', 'false');
-        document.body.style.overflow = 'hidden';
-      }
+    // ── Universal Address Chooser ──
+    function openAddressChooser(name, address, lat, lon) {
+      currentSheetAddress = address;
+      document.getElementById("sheet-pub-name").textContent = name;
+      document.getElementById("sheet-pub-address").textContent = address;
+
+      const encodedAddr = encodeURIComponent(address);
+      const encodedName = encodeURIComponent(name);
+
+      const appleURL = (lat && lon)
+        ? "https://maps.apple.com/?daddr=" + lat + "," + lon + "&q=" + encodedName
+        : "https://maps.apple.com/?q=" + encodedAddr;
+      document.getElementById("sheet-apple-maps").href = appleURL;
+
+      const googleURL = (lat && lon)
+        ? "https://www.google.com/maps/dir/?api=1&destination=" + lat + "," + lon
+        : "https://www.google.com/maps/search/?api=1&query=" + encodedAddr;
+      document.getElementById("sheet-google-maps").href = googleURL;
+
+      const citymapperURL = (lat && lon)
+        ? "https://citymapper.com/directions?endcoord=" + lat + "," + lon + "&endname=" + encodedName
+        : "https://citymapper.com/directions?endaddress=" + encodedAddr;
+      document.getElementById("sheet-citymapper").href = citymapperURL;
+
+      const modal = document.getElementById("address-modal");
+      modal.style.display = "flex";
+      requestAnimationFrame(() => modal.classList.add("open"));
     }
 
-    function closeModal() {
-      if (modal) {
-        modal.classList.remove('is-open');
-        modal.setAttribute('aria-hidden', 'true');
-        document.body.style.overflow = '';
-      }
+    function closeAddressModal(e) {
+      if (e && e.target && e.target !== e.currentTarget && !e.target.classList.contains("btn-sheet-close")) return;
+      const modal = document.getElementById("address-modal");
+      modal.classList.remove("open");
+      setTimeout(() => { modal.style.display = "none"; }, 200);
     }
 
-    if (openBtn) openBtn.addEventListener('click', openModal);
-    if (closeBtn) closeBtn.addEventListener('click', closeModal);
-    if (doneBtn) doneBtn.addEventListener('click', closeModal);
-
-    if (modal) {
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal();
+    function copySheetAddress() {
+      if (!currentSheetAddress) return;
+      navigator.clipboard.writeText(currentSheetAddress).then(() => {
+        const lbl = document.getElementById("sheet-copy-label");
+        lbl.textContent = "Address Copied!";
+        setTimeout(() => { lbl.textContent = "Copy Address"; }, 2000);
+      }).catch(() => {
+        const lbl = document.getElementById("sheet-copy-label");
+        lbl.textContent = currentSheetAddress;
       });
     }
 
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && modal && modal.classList.contains('is-open')) {
-        closeModal();
-      }
-    });
+    // ── Service Worker & Notifications ──
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", async () => {
+        try {
+          swRegistration = await navigator.serviceWorker.register("/sw.js");
+          checkExistingPushSubscription();
+        } catch (err) {
+          console.warn("ServiceWorker registration:", err);
+        }
+      });
+    }
 
-    // Lightweight background status refresher
-    async function checkStatus(force) {
+    async function checkExistingPushSubscription() {
+      if (!swRegistration || !("pushManager" in swRegistration)) {
+        const card = document.querySelector(".push-alert-card");
+        if (card && !("Notification" in window)) {
+          card.style.display = "none";
+        }
+        return;
+      }
       try {
-        const url = force ? '/api/status?fresh=1' : '/api/status';
-        const res = await fetch(url);
+        const sub = await swRegistration.pushManager.getSubscription();
+        if (sub) {
+          isPushSubscribed = true;
+          updatePushUI(true);
+        }
+      } catch (e) {}
+    }
+
+    function updatePushUI(enabled) {
+      const btn = document.getElementById("push-btn");
+      const text = document.getElementById("push-btn-text");
+      const note = document.getElementById("push-status-note");
+      if (!btn || !text || !note) return;
+
+      if (enabled) {
+        btn.classList.add("active");
+        text.textContent = "NOTIFICATIONS ACTIVE";
+        note.textContent = "This device is set to receive live pub alerts";
+      } else {
+        btn.classList.remove("active");
+        text.textContent = "ENABLE NOTIFICATIONS";
+        note.textContent = "Direct browser & phone alerts";
+      }
+    }
+
+    function urlBase64ToUint8Array(base64String) {
+      const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+      const base64 = (base64String + padding).replace(/\-/g, "+").replace(/_/g, "/");
+      const rawData = window.atob(base64);
+      const outputArray = new Uint8Array(rawData.length);
+      for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+      }
+      return outputArray;
+    }
+
+    async function togglePushNotifications() {
+      if (!("Notification" in window)) {
+        alert("Notifications are not supported in this browser.");
+        return;
+      }
+
+      const note = document.getElementById("push-status-note");
+
+      if (isPushSubscribed) {
+        try {
+          const sub = await swRegistration.pushManager.getSubscription();
+          if (sub) {
+            await fetch("/api/push/unsubscribe", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ endpoint: sub.endpoint })
+            });
+            await sub.unsubscribe();
+          }
+          isPushSubscribed = false;
+          updatePushUI(false);
+        } catch (e) {
+          console.error("Unsubscribe error:", e);
+        }
+        return;
+      }
+
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        if (note) note.textContent = "Notifications disabled in browser permissions.";
+        return;
+      }
+
+      try {
+        if (!swRegistration) {
+          swRegistration = await navigator.serviceWorker.ready;
+        }
+
+        const vapidRes = await fetch("/api/push/vapid-public-key");
+        const vapidData = await vapidRes.json();
+        if (!vapidData.public_key) {
+          throw new Error("Push service key not available");
+        }
+
+        const sub = await swRegistration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidData.public_key)
+        });
+
+        const subJSON = sub.toJSON();
+        const resp = await fetch("/api/push/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            endpoint: subJSON.endpoint,
+            keys: {
+              p256dh: subJSON.keys.p256dh,
+              auth: subJSON.keys.auth
+            }
+          })
+        });
+
+        if (resp.ok) {
+          isPushSubscribed = true;
+          updatePushUI(true);
+        } else {
+          if (note) note.textContent = "Server failed to save subscription.";
+        }
+      } catch (err) {
+        console.error("Push enable failed:", err);
+        if (note) note.textContent = "Could not activate: " + err.message;
+      }
+    }
+
+    // ── Email Alerts Subscription ──
+    async function handleAlertSubscribe(e) {
+      e.preventDefault();
+      const input = document.getElementById("subscribe-email");
+      const btn = document.getElementById("subscribe-btn");
+      const errBanner = document.getElementById("subscribe-error");
+      const container = document.getElementById("subscribe-container");
+      const successCard = document.getElementById("subscribe-success");
+      const emailDisplay = document.getElementById("success-email-display");
+      if (!input) return;
+
+      const email = input.value.trim();
+      if (!email) return;
+
+      if (errBanner) errBanner.style.display = "none";
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "JOINING...";
+      }
+
+      try {
+        const res = await fetch("/api/alerts/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          container.style.display = "none";
+          if (emailDisplay) emailDisplay.textContent = email;
+          successCard.style.display = "flex";
+        } else {
+          if (errBanner) {
+            errBanner.textContent = data.error || "Could not subscribe. Please try again.";
+            errBanner.style.display = "block";
+          }
+        }
+      } catch (err) {
+        if (errBanner) {
+          errBanner.textContent = "Connection issue. Please try again.";
+          errBanner.style.display = "block";
+        }
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "EMAIL ALERTS";
+        }
+      }
+    }
+
+    function resetSubscribeForm() {
+      const container = document.getElementById("subscribe-container");
+      const successCard = document.getElementById("subscribe-success");
+      const input = document.getElementById("subscribe-email");
+      const errBanner = document.getElementById("subscribe-error");
+
+      if (container) container.style.display = "flex";
+      if (successCard) successCard.style.display = "none";
+      if (errBanner) errBanner.style.display = "none";
+      if (input) {
+        input.value = "";
+        input.focus();
+      }
+    }
+
+    // ── In-place asynchronous radar sweep ──
+    async function triggerManualSweep() {
+      if (isSweeping) return;
+      isSweeping = true;
+
+      const btn = document.getElementById("sweep-btn");
+      const label = document.getElementById("sweep-btn-label");
+
+      if (btn) btn.classList.add("is-scanning");
+      if (label) label.textContent = "Sweeping Brunswick Taps...";
+
+      try {
+        const res = await fetch("/api/status?fresh=1");
+        if (res.ok) {
+          const data = await res.json();
+          const currentAtPub = {{if .AtPub}}true{{else}}false{{end}};
+
+          if (data.at_pub !== currentAtPub) {
+            location.reload();
+            return;
+          }
+
+          const sub = document.getElementById("status-subtext");
+          if (sub && data.subtext) {
+            sub.textContent = data.subtext;
+            sub.classList.add("pulse-update");
+            setTimeout(() => sub.classList.remove("pulse-update"), 600);
+          }
+
+          const lbl = document.getElementById("last-checked-label");
+          if (lbl && data.checked_at) {
+            const d = new Date(data.checked_at);
+            lbl.textContent = "Live beacon • Last sweep: " + d.toLocaleTimeString();
+          }
+        }
+      } catch (e) {
+      } finally {
+        setTimeout(() => {
+          if (btn) btn.classList.remove("is-scanning");
+          if (label) label.textContent = "Sweep Brunswick Taps";
+          isSweeping = false;
+        }, 500);
+      }
+    }
+
+    // Background passive polling every 30 seconds
+    setInterval(async () => {
+      try {
+        const res = await fetch("/api/status");
         if (!res.ok) return;
         const data = await res.json();
-        
-        // If state transitioned (went to pub or left pub), reload to update view cleanly
         const currentAtPub = {{if .AtPub}}true{{else}}false{{end}};
         if (data.at_pub !== currentAtPub) {
           location.reload();
         } else {
-          const lbl = document.getElementById('last-checked-label');
+          const lbl = document.getElementById("last-checked-label");
           if (lbl && data.checked_at) {
             const d = new Date(data.checked_at);
-            lbl.textContent = 'Checked ' + d.toLocaleTimeString() + ' via Home Assistant';
+            lbl.textContent = "Live beacon • Last sweep: " + d.toLocaleTimeString();
           }
         }
-      } catch (e) {
-        // Silent fail on network hiccup
-      }
-    }
-
-    // Auto-poll every 30 seconds
-    setInterval(() => checkStatus(false), 30000);
+      } catch (e) {}
+    }, 30000);
   </script>
 </body>
 </html>

@@ -19,6 +19,8 @@ type PubSummary struct {
 	EntityID  string  `json:"entity_id"`
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
+	Address   string  `json:"address"`
+	MapURL    string  `json:"map_url,omitempty"`
 }
 
 // Pub contains details about the pub Cam is currently visiting.
@@ -27,9 +29,11 @@ type Pub struct {
 	EntityID  string    `json:"entity_id"`
 	Latitude  float64   `json:"latitude"`
 	Longitude float64   `json:"longitude"`
+	Address   string    `json:"address"`
 	Icon      string    `json:"icon"`
 	Since     time.Time `json:"since"`
 	Duration  string    `json:"duration"`
+	ArrivedAt string    `json:"arrived_at"`
 }
 
 // Status represents the evaluated status of whether Cam is at a pub.

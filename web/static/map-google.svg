@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none">
+  <!-- Winding Route Line -->
+  <path d="M5 19 C5 14 11 15 11 10 C11 7 8 7 8 5" stroke="#E5A823" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <!-- Destination Pin -->
+  <path d="M16 17 C16 17 20 13 20 9.5 C20 7 18 5 15.5 5 C13 5 11 7 11 9.5 C11 13 16 17 16 17 Z" fill="#D4541B" stroke="#25140A" stroke-width="1.8"/>
+  <circle cx="15.5" cy="9.5" r="1.5" fill="#FFFDF5"/>
+  <circle cx="5" cy="19" r="1.8" fill="#1E5A3E" stroke="#25140A" stroke-width="1.2"/>
+</svg>

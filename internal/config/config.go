@@ -18,6 +18,12 @@ type Config struct {
 	CacheTTL        time.Duration
 	PubZones        []string
 	PubIconKeywords []string
+	ResendAPIKey    string
+	ResendFrom      string
+	SubscribersPath string
+	BaseURL         string
+	PushSubsPath    string
+	VAPIDKeysPath   string
 }
 
 // Load reads configuration from environment variables, optionally loading from
@@ -33,6 +39,12 @@ func Load() (*Config, error) {
 		Port:            getEnv("PORT", "8080"),
 		CacheTTL:        15 * time.Second,
 		PubIconKeywords: []string{"glass", "beer", "mug", "wine", "pub", "bar", "cocktail", "liquor"},
+		ResendAPIKey:    getEnv("RESEND_API_KEY", ""),
+		ResendFrom:      getEnv("RESEND_FROM", "Cam's Pub Radar <alerts@whereis.cam>"),
+		SubscribersPath: getEnv("SUBSCRIBERS_PATH", "data/subscribers.json"),
+		BaseURL:         getEnv("BASE_URL", "https://whereis.cam"),
+		PushSubsPath:    getEnv("PUSH_SUBS_PATH", "data/push_subscriptions.json"),
+		VAPIDKeysPath:   getEnv("VAPID_KEYS_PATH", "data/vapid_keys.json"),
 	}
 
 	if ttlStr := os.Getenv("CACHE_TTL_SECONDS"); ttlStr != "" {
