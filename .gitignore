@@ -11,6 +11,9 @@ whereiscam
 *.so
 *.dylib
 
+# scripts
+scripts/
+
 # Test artifacts
 *.out
 coverage.html
@@ -24,3 +27,7 @@ Thumbs.db
 .vscode/
 *.swp
 *~
+
+# Logs
+logs/
+*.log
