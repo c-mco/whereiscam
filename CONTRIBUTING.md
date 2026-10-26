@@ -68,7 +68,7 @@ cp .env.example .env
 
 Set your Home Assistant credentials:
 ```env
-HASS_URL=https://fitz.itspartyti.me
+HASS_URL=https://HomeAssistant.example.com
 HASS_TOKEN=your_token_here
 PERSON_ENTITY=person.cam
 PORT=8080
