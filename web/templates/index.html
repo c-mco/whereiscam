@@ -423,6 +423,7 @@
 
       const modal = document.getElementById("address-modal");
       modal.style.display = "flex";
+      modal.scrollTop = 0;
       requestAnimationFrame(() => modal.classList.add("open"));
     }
 

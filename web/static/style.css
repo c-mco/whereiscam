@@ -603,6 +603,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  font-family: inherit;
   padding: 0.32rem 0.75rem;
   background: var(--bg-plaque-inner);
   border: 2px solid var(--mission-brown);
@@ -977,6 +978,10 @@ body {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease;
+  /* Let the sheet scroll on short screens (landscape phones) instead of
+     overflowing off the top where Cancel can't be reached. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .address-modal-overlay.open {
@@ -993,6 +998,9 @@ body {
   max-width: 400px;
   padding: 1.5rem 1.25rem 1.15rem;
   text-align: center;
+  /* auto margins centre the sheet but collapse to 0 when it's taller than the
+     viewport, so it starts at the top and scrolls rather than being clipped. */
+  margin: auto;
   transform: translateY(12px);
   transition: transform 0.2s ease;
 }

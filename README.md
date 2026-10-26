@@ -39,6 +39,15 @@ Styled with an authentic **70s Art Deco Saloon Bar** aesthetic — heavy timber 
 - ⏱️ **Background Autonomous Poller**:
   - Server-side 30s background ticker polls Home Assistant transitions independently of web traffic.
   - Strict alert isolation: `?mock=pub` preview requests are 100% isolated and never trigger subscriber alerts.
+- 🍺 **Cam's Command Saloon (Dashboard & Control Deck)**:
+  - Accessible via `/dashboard` with password protection (`ADMIN_PASSWORD`; password login is disabled when unset). Authelia's `Remote-User` header is only honoured from proxies listed in `TRUSTED_PROXIES`.
+  - **Traffic & Page Hit Analytics**: Live hit counter (All Time, Today, 7 Days), unique visitor IPs, top pages breakdown, and recent hit logs.
+  - **Subscriber Management**: View and deactivate email subscribers and monitor active Web Push endpoints.
+  - **Two Secret Pint Modes**:
+    - 🤫 **Stealth Mode**: Freezes radar to appear completely off-duty ("Cam's not at a pub"), suppressing background alerts and location updates.
+    - 🤫🍺 **Cheeky Mystery Mode**: Shows Cam is having a pint, but explicitly informs visitors: *"Cam's at a pub but not telling where! Sworn to secrecy."* Coordinates remain concealed.
+  - **Manual Pub Override**: Set an arbitrary or tracked pub location manually (with arrival time and optional subscriber broadcast).
+  - **Developer Tools**: Send safe test alert emails and inspect raw Home Assistant sensor states.
 
 ---
 

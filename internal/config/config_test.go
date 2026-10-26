@@ -50,10 +50,19 @@ func TestLoad(t *testing.T) {
 	t.Setenv("PORT", "3000")
 	t.Setenv("CACHE_TTL_SECONDS", "45")
 	t.Setenv("PUB_ZONES", "zone.the_vic, zone.the_union")
+	t.Setenv("ADMIN_PASSWORD", "supersecret123")
 
 	cfg, err := Load()
 	if err != nil {
 		t.Fatalf("Load() unexpected error: %v", err)
+	}
+
+	if cfg.BindAddr != "" {
+		t.Errorf("expected BindAddr to default to all interfaces, got %q", cfg.BindAddr)
+	}
+
+	if cfg.AdminPassword != "supersecret123" {
+		t.Errorf("expected AdminPassword 'supersecret123', got %q", cfg.AdminPassword)
 	}
 
 	if cfg.HassURL != "https://fitz.example.com" {

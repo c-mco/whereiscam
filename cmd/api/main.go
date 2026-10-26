@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -16,6 +17,7 @@ import (
 	"whereis.cam/internal/handlers"
 	"whereis.cam/internal/homeassistant"
 	"whereis.cam/internal/middleware"
+	"whereis.cam/internal/netutil"
 	"whereis.cam/internal/pub"
 	"whereis.cam/internal/storage"
 )
@@ -52,9 +54,18 @@ func main() {
 		log.Printf("Warning: failed to initialize push service: %v", err)
 	}
 
-	server, err := handlers.NewServer(hassClient, detector, alertsService, pushService)
+	server, err := handlers.NewServer(hassClient, detector, alertsService, pushService, store, cfg.AdminPassword)
 	if err != nil {
 		log.Fatalf("Failed to initialize server: %v", err)
+	}
+
+	trustedProxies, err := netutil.ParseTrustedProxies(cfg.TrustedProxies)
+	if err != nil {
+		log.Fatalf("Invalid TRUSTED_PROXIES: %v", err)
+	}
+	server.SetTrustedProxies(trustedProxies)
+	if cfg.AdminPassword == "" {
+		log.Printf("Warning: ADMIN_PASSWORD not set; dashboard password login is disabled")
 	}
 
 	// Start background watcher to broadcast email alerts autonomously
@@ -62,12 +73,13 @@ func main() {
 
 	// Apply middleware stack
 	handler := server.Handler()
+	handler = middleware.HitTracker(store)(handler)
 	handler = middleware.Recoverer(handler)
 	handler = middleware.SecurityHeaders(handler)
 	handler = middleware.Logging(handler)
 
 	httpServer := &http.Server{
-		Addr:         ":" + cfg.Port,
+		Addr:         net.JoinHostPort(cfg.BindAddr, cfg.Port),
 		Handler:      handler,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 15 * time.Second,
@@ -90,7 +102,7 @@ func main() {
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
-		log.Printf("Server listening on http://localhost:%s (tracking %s)", cfg.Port, cfg.PersonEntity)
+		log.Printf("Server listening on %s (tracking %s)", httpServer.Addr, cfg.PersonEntity)
 		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("Server failed: %v", err)
 		}

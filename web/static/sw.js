@@ -1,7 +1,7 @@
 // whereis.cam Service Worker for PWA and Web Push
-const CACHE_NAME = 'whereiscam-v1';
+// Bump CACHE_NAME whenever caching behaviour changes so old caches are purged.
+const CACHE_NAME = 'whereiscam-v2';
 const ASSETS_TO_CACHE = [
-  '/',
   '/static/style.css',
   '/static/fonts/calistoga-latin.woff2',
   '/static/fonts/josefinsans-latin.woff2',
@@ -33,10 +33,21 @@ self.addEventListener('fetch', (event) => {
   if (event.request.url.includes('/api/') || event.request.mode === 'navigate') {
     return;
   }
+  if (event.request.method !== 'GET') {
+    return;
+  }
+  // Network-first so deployed CSS/asset changes reach returning visitors;
+  // the cache is only an offline fallback.
+  // cache: 'no-cache' revalidates with the server (cheap 304s via ETag) rather
+  // than trusting the long max-age older server versions handed out.
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      return cached || fetch(event.request);
-    })
+    fetch(event.request, { cache: 'no-cache' }).then((response) => {
+      if (response.ok) {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+      }
+      return response;
+    }).catch(() => caches.match(event.request))
   );
 });
 

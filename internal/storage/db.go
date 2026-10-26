@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/mattn/go-sqlite3"
 )
 
 // Subscriber represents an email subscriber.
@@ -115,9 +115,78 @@ func (db *DB) migrate() error {
 		departed_at DATETIME,
 		duration_minutes INTEGER
 	);
+
+	CREATE TABLE IF NOT EXISTS page_hits (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		path TEXT NOT NULL,
+		ip TEXT NOT NULL DEFAULT '',
+		user_agent TEXT NOT NULL DEFAULT '',
+		referer TEXT NOT NULL DEFAULT '',
+		created_at DATETIME NOT NULL
+	);
+
+	CREATE INDEX IF NOT EXISTS idx_page_hits_created_at ON page_hits(created_at);
+	CREATE INDEX IF NOT EXISTS idx_page_hits_path ON page_hits(path);
 	`
-	_, err := db.conn.Exec(schema)
-	return err
+	if _, err := db.conn.Exec(schema); err != nil {
+		return err
+	}
+
+	// Auto-normalize legacy timestamp formats in subscribers table
+	rows, err := db.conn.Query("SELECT id, CAST(created_at AS TEXT) FROM subscribers")
+	if err == nil {
+		type fixItem struct {
+			id int64
+			t  time.Time
+		}
+		var toFix []fixItem
+		for rows.Next() {
+			var id int64
+			var raw string
+			if err := rows.Scan(&id, &raw); err == nil {
+				if parsed, pErr := parseFlexibleTime(raw); pErr == nil {
+					toFix = append(toFix, fixItem{id: id, t: parsed})
+				}
+			}
+		}
+		rows.Close()
+		for _, item := range toFix {
+			_, _ = db.conn.Exec("UPDATE subscribers SET created_at = ? WHERE id = ?", item.t.Format(time.RFC3339), item.id)
+		}
+	}
+
+	return nil
+}
+
+// parseFlexibleTime parses various legacy and standard datetime formats.
+func parseFlexibleTime(raw string) (time.Time, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return time.Time{}, fmt.Errorf("empty time string")
+	}
+	if idx := strings.Index(raw, " m="); idx != -1 {
+		raw = raw[:idx]
+	}
+	formats := []string{
+		time.RFC3339Nano,
+		time.RFC3339,
+		"2006-01-02 15:04:05.999999999 -0700 MST",
+		"2006-01-02 15:04:05.999999 -0700 MST",
+		"2006-01-02 15:04:05.999 -0700 MST",
+		"2006-01-02 15:04:05 -0700 MST",
+		"2006-01-02 15:04:05.999999999",
+		"2006-01-02 15:04:05",
+		"2006-01-02T15:04:05",
+	}
+	// Layouts go-sqlite3 itself writes when a time.Time is bound directly,
+	// e.g. "2026-10-20 18:30:00.123456789+11:00".
+	formats = append(formats, sqlite3.SQLiteTimestampFormats...)
+	for _, f := range formats {
+		if t, err := time.Parse(f, raw); err == nil {
+			return t, nil
+		}
+	}
+	return time.Time{}, fmt.Errorf("unable to parse time: %s", raw)
 }
 
 // ── Email Subscriber Methods ──
@@ -143,8 +212,12 @@ func (db *DB) SubscribeEmail(rawEmail string) (Subscriber, bool, error) {
 
 	var sub Subscriber
 	var unsubscribedAt sql.NullTime
-	row := db.conn.QueryRow("SELECT id, email, token, created_at, active, unsubscribed_at FROM subscribers WHERE email = ?", email)
-	err := row.Scan(&sub.ID, &sub.Email, &sub.Token, &sub.CreatedAt, &sub.Active, &unsubscribedAt)
+	var rawCreated string
+	row := db.conn.QueryRow("SELECT id, email, token, CAST(created_at AS TEXT), active, unsubscribed_at FROM subscribers WHERE email = ?", email)
+	err := row.Scan(&sub.ID, &sub.Email, &sub.Token, &rawCreated, &sub.Active, &unsubscribedAt)
+	if err == nil {
+		sub.CreatedAt, _ = parseFlexibleTime(rawCreated)
+	}
 
 	if err == sql.ErrNoRows {
 		// New subscriber
@@ -152,7 +225,7 @@ func (db *DB) SubscribeEmail(rawEmail string) (Subscriber, bool, error) {
 		now := time.Now()
 		res, err := db.conn.Exec(
 			"INSERT INTO subscribers (email, token, created_at, active) VALUES (?, ?, ?, 1)",
-			email, token, now,
+			email, token, now.Format(time.RFC3339),
 		)
 		if err != nil {
 			return Subscriber{}, false, err
@@ -200,7 +273,7 @@ func (db *DB) UnsubscribeEmail(token string) bool {
 
 // ActiveSubscribers returns all active email subscribers.
 func (db *DB) ActiveSubscribers() ([]Subscriber, error) {
-	rows, err := db.conn.Query("SELECT id, email, token, created_at, active FROM subscribers WHERE active = 1 ORDER BY id ASC")
+	rows, err := db.conn.Query("SELECT id, email, token, CAST(created_at AS TEXT), active FROM subscribers WHERE active = 1 ORDER BY id ASC")
 	if err != nil {
 		return nil, err
 	}
@@ -209,12 +282,55 @@ func (db *DB) ActiveSubscribers() ([]Subscriber, error) {
 	var list []Subscriber
 	for rows.Next() {
 		var s Subscriber
-		if err := rows.Scan(&s.ID, &s.Email, &s.Token, &s.CreatedAt, &s.Active); err != nil {
+		var rawCreated string
+		if err := rows.Scan(&s.ID, &s.Email, &s.Token, &rawCreated, &s.Active); err != nil {
 			continue
 		}
+		s.CreatedAt, _ = parseFlexibleTime(rawCreated)
 		list = append(list, s)
 	}
 	return list, nil
+}
+
+// AllSubscribers returns one page of email subscribers, newest first.
+func (db *DB) AllSubscribers(limit, offset int) ([]Subscriber, error) {
+	if limit <= 0 {
+		limit = 100
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	rows, err := db.conn.Query("SELECT id, email, token, CAST(created_at AS TEXT), active FROM subscribers ORDER BY id DESC LIMIT ? OFFSET ?", limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []Subscriber
+	for rows.Next() {
+		var s Subscriber
+		var rawCreated string
+		if err := rows.Scan(&s.ID, &s.Email, &s.Token, &rawCreated, &s.Active); err != nil {
+			continue
+		}
+		s.CreatedAt, _ = parseFlexibleTime(rawCreated)
+		list = append(list, s)
+	}
+	return list, nil
+}
+
+// CountSubscribers returns the total number of email subscribers, active or not.
+func (db *DB) CountSubscribers() (int, error) {
+	var n int
+	err := db.conn.QueryRow("SELECT COUNT(*) FROM subscribers").Scan(&n)
+	return n, err
+}
+
+// DeactivateEmailSubscriber marks an email subscriber inactive by ID.
+func (db *DB) DeactivateEmailSubscriber(id int64) error {
+	now := time.Now()
+	_, err := db.conn.Exec("UPDATE subscribers SET active = 0, unsubscribed_at = ? WHERE id = ?", now, id)
+	return err
 }
 
 // ── Web Push Subscription Methods ──
@@ -305,7 +421,7 @@ func (db *DB) ImportLegacyJSON(subscribersJSONPath, vapidKeysJSONPath, pushSubsJ
 					if s.Email != "" && s.Token != "" {
 						_, _ = db.conn.Exec(
 							"INSERT OR IGNORE INTO subscribers (email, token, created_at, active) VALUES (?, ?, ?, ?)",
-							s.Email, s.Token, s.CreatedAt, s.Active,
+							s.Email, s.Token, s.CreatedAt.Format(time.RFC3339), s.Active,
 						)
 					}
 				}
@@ -354,4 +470,168 @@ func (db *DB) ImportLegacyJSON(subscribersJSONPath, vapidKeysJSONPath, pushSubsJ
 			}
 		}
 	}
+}
+
+// ── Page Hits & Analytics ──
+
+// PageHit represents an individual request hit.
+type PageHit struct {
+	ID        int64     `json:"id"`
+	Path      string    `json:"path"`
+	IP        string    `json:"ip"`
+	UserAgent string    `json:"user_agent"`
+	Referer   string    `json:"referer"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// PathStat represents hit count for a specific path.
+type PathStat struct {
+	Path  string `json:"path"`
+	Count int    `json:"count"`
+}
+
+// HitStats aggregates page view analytics.
+type HitStats struct {
+	TotalHits  int        `json:"total_hits"`
+	HitsToday  int        `json:"hits_today"`
+	Hits7Days  int        `json:"hits_7_days"`
+	UniqueIPs  int        `json:"unique_ips"`
+	TopPaths   []PathStat `json:"top_paths"`
+	RecentHits []PageHit  `json:"recent_hits"`
+}
+
+// OverrideState captures the manual pub or secret pint settings.
+type OverrideState struct {
+	Mode       string    `json:"mode"` // "none", "secret_pint_stealth", "secret_pint_cheeky", "manual_pub"
+	PubName    string    `json:"pub_name"`
+	PubAddress string    `json:"pub_address"`
+	ArrivedAt  string    `json:"arrived_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
+
+// RecordHit saves an incoming HTTP request into page_hits.
+func (db *DB) RecordHit(path, ip, userAgent, referer string) error {
+	path = strings.TrimSpace(path)
+	if path == "" {
+		path = "/"
+	}
+	now := time.Now().UTC()
+	_, err := db.conn.Exec(
+		"INSERT INTO page_hits (path, ip, user_agent, referer, created_at) VALUES (?, ?, ?, ?, ?)",
+		path, ip, userAgent, referer, now,
+	)
+	return err
+}
+
+// PruneHits deletes page hits recorded before cutoff and returns how many were removed.
+func (db *DB) PruneHits(cutoff time.Time) (int64, error) {
+	res, err := db.conn.Exec("DELETE FROM page_hits WHERE created_at < ?", cutoff.UTC())
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
+}
+
+// GetHitStats returns aggregated metrics and recent hits.
+func (db *DB) GetHitStats() (HitStats, error) {
+	var stats HitStats
+	now := time.Now().UTC()
+	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	sevenDaysAgo := now.AddDate(0, 0, -7)
+
+	// 1. Total hits
+	_ = db.conn.QueryRow("SELECT COUNT(*) FROM page_hits").Scan(&stats.TotalHits)
+
+	// 2. Hits today
+	_ = db.conn.QueryRow("SELECT COUNT(*) FROM page_hits WHERE created_at >= ?", startOfToday).Scan(&stats.HitsToday)
+
+	// 3. Hits last 7 days
+	_ = db.conn.QueryRow("SELECT COUNT(*) FROM page_hits WHERE created_at >= ?", sevenDaysAgo).Scan(&stats.Hits7Days)
+
+	// 4. Unique IPs
+	_ = db.conn.QueryRow("SELECT COUNT(DISTINCT ip) FROM page_hits WHERE ip != ''").Scan(&stats.UniqueIPs)
+
+	// 5. Top paths (limit 10)
+	rows, err := db.conn.Query("SELECT path, COUNT(*) as cnt FROM page_hits GROUP BY path ORDER BY cnt DESC LIMIT 10")
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var p PathStat
+			if err := rows.Scan(&p.Path, &p.Count); err == nil {
+				stats.TopPaths = append(stats.TopPaths, p)
+			}
+		}
+	}
+
+	// 6. Recent hits (limit 25)
+	rRows, err := db.conn.Query("SELECT id, path, ip, user_agent, referer, created_at FROM page_hits ORDER BY id DESC LIMIT 25")
+	if err == nil {
+		defer rRows.Close()
+		for rRows.Next() {
+			var h PageHit
+			if err := rRows.Scan(&h.ID, &h.Path, &h.IP, &h.UserAgent, &h.Referer, &h.CreatedAt); err == nil {
+				stats.RecentHits = append(stats.RecentHits, h)
+			}
+		}
+	}
+
+	return stats, nil
+}
+
+// GetOverrideState retrieves the current manual override or secret pint mode from app_settings.
+func (db *DB) GetOverrideState() (OverrideState, error) {
+	mode, _ := db.GetSetting("override_mode")
+	if mode == "" {
+		mode = "none"
+	}
+	pubName, _ := db.GetSetting("override_pub_name")
+	pubAddress, _ := db.GetSetting("override_pub_address")
+	arrivedAt, _ := db.GetSetting("override_arrived_at")
+	updatedStr, _ := db.GetSetting("override_updated_at")
+
+	var updatedAt time.Time
+	if updatedStr != "" {
+		updatedAt, _ = time.Parse(time.RFC3339, updatedStr)
+	}
+
+	return OverrideState{
+		Mode:       mode,
+		PubName:    pubName,
+		PubAddress: pubAddress,
+		ArrivedAt:  arrivedAt,
+		UpdatedAt:  updatedAt,
+	}, nil
+}
+
+// SetOverrideState saves or updates the override settings.
+func (db *DB) SetOverrideState(state OverrideState) error {
+	if state.Mode == "" {
+		state.Mode = "none"
+	}
+	now := time.Now().UTC()
+	if state.UpdatedAt.IsZero() {
+		state.UpdatedAt = now
+	}
+
+	if err := db.SetSetting("override_mode", state.Mode); err != nil {
+		return err
+	}
+	if err := db.SetSetting("override_pub_name", state.PubName); err != nil {
+		return err
+	}
+	if err := db.SetSetting("override_pub_address", state.PubAddress); err != nil {
+		return err
+	}
+	if err := db.SetSetting("override_arrived_at", state.ArrivedAt); err != nil {
+		return err
+	}
+	return db.SetSetting("override_updated_at", state.UpdatedAt.Format(time.RFC3339))
+}
+
+// ClearOverrideState resets any override to normal mode.
+func (db *DB) ClearOverrideState() error {
+	return db.SetOverrideState(OverrideState{
+		Mode:      "none",
+		UpdatedAt: time.Now().UTC(),
+	})
 }

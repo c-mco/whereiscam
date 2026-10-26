@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Cam's Dashboard - whereis.cam</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="preload" href="/static/fonts/calistoga-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/static/fonts/josefinsans-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    body {
+      padding: 16px 12px 40px;
+      display: block;
+      min-height: 100vh;
+    }
+    .dash-container {
+      max-width: 1080px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    /* Top Bar */
+    .dash-topbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 3px solid var(--mission-brown-dark);
+    }
+    .dash-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .dash-brand-title {
+      font-family: var(--font-chunky-serif);
+      font-size: 1.8rem;
+      color: var(--burnt-orange);
+      margin: 0;
+      line-height: 1.1;
+    }
+    .dash-brand-tag {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--mission-brown-light);
+    }
+    .dash-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn-dash-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border: 2px solid var(--mission-brown-dark);
+      border-radius: var(--radius-pill);
+      font-family: var(--font-sans);
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: 0 3px 0 var(--mission-brown-dark);
+      transition: transform 0.1s ease, background 0.15s ease;
+    }
+    .btn-dash-action:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 var(--mission-brown-dark);
+    }
+    .btn-public-site {
+      background: var(--mustard-yellow);
+      color: var(--text-dark);
+    }
+    .btn-public-site:hover {
+      background: var(--mustard-yellow-light);
+    }
+    .btn-logout {
+      background: var(--bg-plaque-sunken);
+      color: var(--text-dark);
+    }
+    .btn-logout:hover {
+      background: #dfcfb9;
+    }
+
+    /* Status Banner */
+    .status-banner {
+      background: var(--bg-plaque);
+      border: 3px solid var(--mission-brown-dark);
+      border-radius: var(--radius-inner);
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: 0 4px 12px rgba(35, 19, 9, 0.08);
+    }
+    .banner-mode-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      font-weight: 700;
+      font-size: 0.95rem;
+      border: 2px solid var(--mission-brown-dark);
+    }
+    .mode-none {
+      background: #d4e9d7;
+      color: #164e28;
+    }
+    .mode-stealth {
+      background: #edd8c5;
+      color: #5c3518;
+    }
+    .mode-cheeky {
+      background: #fde8a5;
+      color: #8c5b05;
+    }
+    .mode-manual {
+      background: #fbd6c6;
+      color: #8a2a05;
+    }
+
+    /* Metric Cards Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .metric-card {
+      background: var(--bg-plaque);
+      border: 3px solid var(--mission-brown-dark);
+      border-radius: var(--radius-inner);
+      padding: 18px 20px;
+      box-shadow: 0 4px 0 var(--mission-brown-dark);
+      position: relative;
+    }
+    .metric-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--mission-brown-light);
+      margin-bottom: 6px;
+    }
+    .metric-val {
+      font-family: var(--font-chunky-serif);
+      font-size: 2.2rem;
+      line-height: 1.1;
+      color: var(--burnt-orange);
+    }
+    .metric-sub {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Two-Column Section */
+    .dash-sections-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+    @media (min-width: 860px) {
+      .dash-sections-grid {
+        grid-template-columns: 1.1fr 0.9fr;
+      }
+    }
+
+    /* Control Panel Box */
+    .control-box {
+      background: var(--bg-plaque);
+      border: 3px solid var(--mission-brown-dark);
+      border-radius: var(--radius-inner);
+      padding: 24px;
+      box-shadow: 0 4px 0 var(--mission-brown-dark);
+      margin-bottom: 24px;
+    }
+    .control-box-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 2px dashed var(--mission-brown-light);
+      padding-bottom: 10px;
+      margin-bottom: 18px;
+    }
+    .control-box-title {
+      font-family: var(--font-chunky-serif);
+      font-size: 1.35rem;
+      color: var(--mission-brown);
+      margin: 0;
+    }
+
+    /* Secret Pint Buttons */
+    .secret-modes-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .btn-secret-mode {
+      padding: 14px 12px;
+      border: 2px solid var(--mission-brown-dark);
+      border-radius: var(--radius-inner);
+      cursor: pointer;
+      text-align: left;
+      font-family: var(--font-sans);
+      transition: transform 0.1s ease, background 0.15s ease;
+      box-shadow: 0 3px 0 var(--mission-brown-dark);
+      background: var(--bg-plaque-inner);
+    }
+    .btn-secret-mode:hover {
+      background: var(--mustard-yellow-soft);
+    }
+    .btn-secret-mode.active {
+      border-color: var(--burnt-orange);
+      background: #fce8db;
+      box-shadow: 0 0 0 2px var(--burnt-orange);
+    }
+    .btn-secret-title {
+      display: block;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--mission-brown-dark);
+      margin-bottom: 3px;
+    }
+    .btn-secret-desc {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.3;
+    }
+
+    /* Forms */
+    .control-form-group {
+      margin-bottom: 14px;
+    }
+    .control-label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--mission-brown);
+      margin-bottom: 4px;
+    }
+    .control-select, .control-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid var(--mission-brown-dark);
+      border-radius: var(--radius-inner);
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      background: var(--bg-plaque-inner);
+      color: var(--text-dark);
+      box-sizing: border-box;
+      outline: none;
+    }
+    .control-select:focus, .control-input:focus {
+      border-color: var(--burnt-orange);
+      background: #fff;
+    }
+    .control-checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--mission-brown);
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    /* Action Buttons */
+    .btn-primary-dash {
+      display: inline-block;
+      width: 100%;
+      padding: 12px 18px;
+      background: var(--burnt-orange);
+      color: var(--text-light);
+      border: 2px solid var(--mission-brown-dark);
+      border-radius: var(--radius-pill);
+      font-family: var(--font-sans);
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 3px 0 var(--mission-brown-dark);
+      transition: transform 0.1s ease, background 0.15s ease;
+      text-align: center;
+      box-sizing: border-box;
+    }
+    .btn-primary-dash:hover {
+      background: var(--burnt-orange-light);
+    }
+    .btn-primary-dash:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 var(--mission-brown-dark);
+    }
+    .btn-clear-dash {
+      display: inline-block;
+      width: 100%;
+      padding: 10px 18px;
+      background: var(--bg-plaque-sunken);
+      color: var(--text-dark);
+      border: 2px solid var(--mission-brown-dark);
+      border-radius: var(--radius-pill);
+      font-family: var(--font-sans);
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 3px 0 var(--mission-brown-dark);
+      margin-top: 10px;
+      text-align: center;
+      box-sizing: border-box;
+    }
+    .btn-clear-dash:hover {
+      background: #dfcfb9;
+    }
+
+    /* Tables */
+    .data-table-wrap {
+      overflow-x: auto;
+      margin-top: 10px;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      text-align: left;
+    }
+    .data-table th {
+      background: var(--bg-plaque-inner);
+      padding: 10px 12px;
+      border-bottom: 2px solid var(--mission-brown-dark);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--mission-brown);
+      white-space: nowrap;
+    }
+    .data-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(84, 52, 32, 0.15);
+      color: var(--text-dark);
+    }
+    .data-table tr:hover td {
+      background: rgba(229, 168, 35, 0.08);
+    }
+
+    /* On phones, stack subscriber rows so the Deactivate button stays on screen
+       instead of hiding off the right edge of a sideways-scrolling table. */
+    @media (max-width: 640px) {
+      .subs-table thead {
+        display: none;
+      }
+      .subs-table tr {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        column-gap: 12px;
+        padding: 10px 4px;
+        border-bottom: 1px solid rgba(84, 52, 32, 0.15);
+      }
+      .subs-table td {
+        display: block;
+        padding: 2px 0;
+        border-bottom: none;
+      }
+      .subs-table td:first-child {
+        grid-column: 1 / -1;
+        overflow-wrap: anywhere;
+      }
+      .subs-table td:nth-child(2) {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+      }
+      .subs-table td:nth-child(4) {
+        grid-column: 2;
+        grid-row: 2 / span 2;
+        align-self: center;
+      }
+    }
+
+    /* Status Dot */
+    .dot-live {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #1c532b;
+      display: inline-block;
+    }
+    .dot-off {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ba3f0c;
+      display: inline-block;
+    }
+
+    /* Toast Notification */
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--mission-brown-dark);
+      color: var(--text-light);
+      padding: 12px 20px;
+      border-radius: var(--radius-inner);
+      border: 2px solid var(--mustard-yellow);
+      font-weight: 600;
+      font-size: 0.9rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      display: none;
+      z-index: 9999;
+    }
+    @media (max-width: 640px) {
+      #toast {
+        left: 16px;
+        right: 16px;
+        bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="grain-overlay" aria-hidden="true"></div>
+
+  <div class="dash-container">
+    <!-- Top Bar -->
+    <header class="dash-topbar">
+      <div class="dash-brand">
+        <div>
+          <h1 class="dash-brand-title">Cam's Command Saloon</h1>
+          <div class="dash-brand-tag">&starf; Live Operations &bull; Radar &bull; Analytics &starf;</div>
+        </div>
+      </div>
+      <div class="dash-actions">
+        <a href="https://whereis.cam" target="_blank" class="btn-dash-action btn-public-site">View Public Radar &rarr;</a>
+        <form method="POST" action="/dashboard/logout" style="margin: 0;">
+          <button type="submit" class="btn-dash-action btn-logout">Logout</button>
+        </form>
+      </div>
+    </header>
+
+    <!-- Status Banner -->
+    <div class="status-banner">
+      <div>
+        <span style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--mission-brown-light);">Current Public State:</span>
+        <div style="margin-top: 4px;">
+          {{if eq .Override.Mode "secret_pint_stealth"}}
+            <span class="banner-mode-pill mode-stealth">🤫 Secret Pint (Stealth) — Shows Off-Duty</span>
+          {{else if eq .Override.Mode "secret_pint_cheeky"}}
+            <span class="banner-mode-pill mode-cheeky">🍺 Secret Pint (Cheeky) — "At a pub but not telling"</span>
+          {{else if eq .Override.Mode "manual_pub"}}
+            <span class="banner-mode-pill mode-manual">★ Manual Pub: {{.Override.PubName}} ({{.Override.ArrivedAt}})</span>
+          {{else}}
+            <span class="banner-mode-pill mode-none">📡 Automatic Home Assistant Radar Active</span>
+          {{end}}
+        </div>
+      </div>
+      <div>
+        {{if ne .Override.Mode "none"}}
+          <button type="button" class="btn-dash-action btn-public-site" onclick="clearOverride()">Resume Auto Radar &rarr;</button>
+        {{else}}
+          <span style="font-size: 0.85rem; color: var(--text-muted);">Tracking: {{.PersonEntity}}</span>
+        {{end}}
+      </div>
+    </div>
+
+    <!-- Metrics Grid -->
+    <section class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label">Total Page Hits</div>
+        <div class="metric-val">{{.HitStats.TotalHits}}</div>
+        <div class="metric-sub">All time recorded views</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Hits Today</div>
+        <div class="metric-val">{{.HitStats.HitsToday}}</div>
+        <div class="metric-sub">Views in last 24 hours</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Email Subscribers</div>
+        <div class="metric-val">{{.ActiveSubscribersCount}}</div>
+        <div class="metric-sub">{{.TotalSubscribersCount}} total registered</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Push Devices</div>
+        <div class="metric-val">{{.PushSubscribersCount}}</div>
+        <div class="metric-sub">Active browser endpoints</div>
+      </div>
+    </section>
+
+    <!-- Main Two-Column Controls & Tools -->
+    <div class="dash-sections-grid">
+      <!-- Left Column: Location Controls -->
+      <div>
+        <!-- Secret Pint Modes Card -->
+        <div class="control-box">
+          <div class="control-box-header">
+            <span style="font-size: 1.4rem;">🤫</span>
+            <h2 class="control-box-title">Secret Pint Modes</h2>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">
+            Freeze or cloak your public radar so your location won't update and subscribers won't get alerted.
+          </p>
+          <div class="secret-modes-row">
+            <button type="button" class="btn-secret-mode {{if eq .Override.Mode "secret_pint_stealth"}}active{{end}}" onclick="setSecretPint('secret_pint_stealth')">
+              <span class="btn-secret-title">1. Stealth Mode</span>
+              <span class="btn-secret-desc">"Cam's not at a pub." Pure silent off-duty stealth.</span>
+            </button>
+            <button type="button" class="btn-secret-mode {{if eq .Override.Mode "secret_pint_cheeky"}}active{{end}}" onclick="setSecretPint('secret_pint_cheeky')">
+              <span class="btn-secret-title">2. Cheeky Mode</span>
+              <span class="btn-secret-desc">"Cam's at a pub but not telling where!" Mystery pint.</span>
+            </button>
+          </div>
+          {{if or (eq .Override.Mode "secret_pint_stealth") (eq .Override.Mode "secret_pint_cheeky")}}
+            <button type="button" class="btn-clear-dash" onclick="clearOverride()">Turn Off Secret Pint Mode & Resume Radar</button>
+          {{end}}
+        </div>
+
+        <!-- Manual Pub Override Card -->
+        <div class="control-box">
+          <div class="control-box-header">
+            <span style="font-size: 1.4rem;">🍺</span>
+            <h2 class="control-box-title">Manually Set Pub</h2>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">
+            Visiting a new watering hole or want to force a specific pub location manually?
+          </p>
+          <form id="manualPubForm" onsubmit="submitManualPub(event)">
+            <div class="control-form-group">
+              <label for="pubSelect" class="control-label">Pick Tracked Pub</label>
+              <select id="pubSelect" class="control-select" onchange="onPubSelectChange()">
+                <option value="">-- Choose known pub or Custom --</option>
+                {{range .TrackedPubs}}
+                  <option value="{{.Name}}" data-address="{{.Address}}">{{.Name}}</option>
+                {{end}}
+                <option value="__custom__">&plus; Enter Custom Pub Name</option>
+              </select>
+            </div>
+            <div class="control-form-group">
+              <label for="customPubName" class="control-label">Pub Name</label>
+              <input type="text" id="customPubName" class="control-input" placeholder="e.g. The Retreat Hotel" required value="{{if eq .Override.Mode "manual_pub"}}{{.Override.PubName}}{{end}}">
+            </div>
+            <div class="control-form-group">
+              <label for="customPubAddress" class="control-label">Pub Address</label>
+              <input type="text" id="customPubAddress" class="control-input" placeholder="e.g. 280 Sydney Rd, Brunswick" value="{{if eq .Override.Mode "manual_pub"}}{{.Override.PubAddress}}{{end}}">
+            </div>
+            <div class="control-form-group">
+              <label for="arrivedAtInput" class="control-label">Arrived At</label>
+              <input type="text" id="arrivedAtInput" class="control-input" placeholder="e.g. 6:30 PM (or leave blank for Now)" value="{{if eq .Override.Mode "manual_pub"}}{{.Override.ArrivedAt}}{{end}}">
+            </div>
+            <label class="control-checkbox-label">
+              <input type="checkbox" id="notifySubscribers">
+              <span>Broadcast email & push alerts to subscribers now</span>
+            </label>
+            <div style="margin-top: 16px;">
+              <button type="submit" class="btn-primary-dash">Set Pub Override Now &rarr;</button>
+              {{if eq .Override.Mode "manual_pub"}}
+                <button type="button" class="btn-clear-dash" onclick="clearOverride()">Clear Override & Return to Auto Radar</button>
+              {{end}}
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Right Column: Tools & HA Status -->
+      <div>
+        <!-- Tools Card -->
+        <div class="control-box">
+          <div class="control-box-header">
+            <span style="font-size: 1.4rem;">🛠️</span>
+            <h2 class="control-box-title">Alert & Radar Tools</h2>
+          </div>
+          
+          <div style="margin-bottom: 20px;">
+            <div class="control-label">Send Safe Test Email Alert</div>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">
+              Sends a single test email without broadcasting to subscribers.
+            </p>
+            <form onsubmit="sendTestEmail(event)" style="display: flex; gap: 8px;">
+              <input type="email" id="testEmailInput" class="control-input" placeholder="cam@example.com" required style="flex: 1;">
+              <button type="submit" class="btn-dash-action btn-public-site" style="white-space: nowrap;">Send Email &rarr;</button>
+            </form>
+          </div>
+
+          <div style="margin-bottom: 20px; border-top: 1px dashed var(--mission-brown-light); padding-top: 14px;">
+            <div class="control-label">Test Web Push To This Browser</div>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">
+              Subscribes this browser and sends an immediate test push notification directly through the server VAPID gateway without broadcasting to anyone else.
+            </p>
+            <button type="button" class="btn-primary-dash" id="btnTestPush" onclick="triggerTestPush()" style="padding: 10px 14px; font-size: 0.85rem;">
+              🔔 Send Test Push To My Browser &rarr;
+            </button>
+          </div>
+
+          <div style="margin-bottom: 20px; border-top: 1px dashed var(--mission-brown-light); padding-top: 14px;">
+            <div class="control-label">Live Home Assistant Status</div>
+            <div style="background: var(--bg-plaque-inner); padding: 12px; border-radius: var(--radius-inner); font-size: 0.85rem; margin-top: 6px;">
+              <div><strong>Person Entity:</strong> {{.PersonEntity}}</div>
+              <div style="margin-top: 4px;"><strong>Raw State:</strong> <code>{{.RawPersonState}}</code></div>
+              <div style="margin-top: 4px;"><strong>HA Connection:</strong> <span class="dot-live"></span> Online</div>
+              <div style="margin-top: 4px;"><strong>Tracked Pubs Loaded:</strong> {{len .TrackedPubs}} zones</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Pages Analytics Card -->
+        <div class="control-box">
+          <div class="control-box-header">
+            <span style="font-size: 1.4rem;">📊</span>
+            <h2 class="control-box-title">Top Pages</h2>
+          </div>
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Path</th>
+                  <th style="text-align: right;">Hits</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{range .HitStats.TopPaths}}
+                  <tr>
+                    <td><code>{{.Path}}</code></td>
+                    <td style="text-align: right; font-weight: 700;">{{.Count}}</td>
+                  </tr>
+                {{else}}
+                  <tr>
+                    <td colspan="2" style="text-align: center; color: var(--text-muted);">No hits recorded yet.</td>
+                  </tr>
+                {{end}}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Hits Table -->
+    <div class="control-box">
+      <div class="control-box-header">
+        <span style="font-size: 1.4rem;">🕒</span>
+        <h2 class="control-box-title">Recent Page Hits Log</h2>
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Path</th>
+              <th>IP</th>
+              <th>User Agent</th>
+              <th>Referer</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{range .HitStats.RecentHits}}
+              <tr>
+                <td style="white-space: nowrap;">{{.CreatedAt.Format "Jan 02 15:04:05"}}</td>
+                <td><strong>{{.Path}}</strong></td>
+                <td><code>{{.IP}}</code></td>
+                <td style="max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{.UserAgent}}">{{.UserAgent}}</td>
+                <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{.Referer}}</td>
+              </tr>
+            {{else}}
+              <tr>
+                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 16px;">No traffic logged yet.</td>
+              </tr>
+            {{end}}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Subscribers Directory -->
+    <div class="control-box">
+      <div class="control-box-header">
+        <span style="font-size: 1.4rem;">📬</span>
+        <h2 class="control-box-title">Email Subscribers ({{.ActiveSubscribersCount}} Active)</h2>
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table subs-table">
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Subscribed Date</th>
+              <th>Status</th>
+              <th style="text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{range .Subscribers}}
+              <tr>
+                <td><strong>{{.Email}}</strong></td>
+                <td>{{.CreatedAt.Format "Jan 02, 2006 15:04"}}</td>
+                <td>
+                  {{if .Active}}
+                    <span style="color: #164e28; font-weight: 700;">Active</span>
+                  {{else}}
+                    <span style="color: #8c5b05;">Unsubscribed</span>
+                  {{end}}
+                </td>
+                <td style="text-align: right;">
+                  {{if .Active}}
+                    <button type="button" class="btn-dash-action btn-logout" style="padding: 4px 10px; font-size: 0.75rem;" onclick="removeSubscriber({{.ID}})">Deactivate</button>
+                  {{end}}
+                </td>
+              </tr>
+            {{else}}
+              <tr>
+                <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 16px;">No subscribers on the radar yet.</td>
+              </tr>
+            {{end}}
+          </tbody>
+        </table>
+      </div>
+      {{if or .SubscribersPrevPage .SubscribersNextPage}}
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 0.85rem;">
+          {{if .SubscribersPrevPage}}<a href="/dashboard?subs_page={{.SubscribersPrevPage}}">&larr; Newer</a>{{else}}<span></span>{{end}}
+          <span style="color: var(--text-muted);">Page {{.SubscribersPage}} &middot; {{.TotalSubscribersCount}} total</span>
+          {{if .SubscribersNextPage}}<a href="/dashboard?subs_page={{.SubscribersNextPage}}">Older &rarr;</a>{{else}}<span></span>{{end}}
+        </div>
+      {{end}}
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    let toastTimer = null;
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.innerText = msg;
+      t.style.display = 'block';
+      // Restart the timer so an earlier toast's timeout can't hide this one early.
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { t.style.display = 'none'; }, 3500);
+    }
+
+    function onPubSelectChange() {
+      const sel = document.getElementById('pubSelect');
+      const nameInput = document.getElementById('customPubName');
+      const addrInput = document.getElementById('customPubAddress');
+      const opt = sel.options[sel.selectedIndex];
+
+      if (sel.value === '__custom__') {
+        nameInput.value = '';
+        addrInput.value = '';
+        nameInput.focus();
+      } else if (sel.value) {
+        nameInput.value = opt.value;
+        addrInput.value = opt.getAttribute('data-address') || '';
+      }
+    }
+
+    async function setSecretPint(mode) {
+      try {
+        const res = await fetch('/api/admin/override', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ mode: mode })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(mode === 'secret_pint_cheeky' ? '🤫 Cheeky Secret Pint Mode Active!' : '🤫 Stealth Secret Pint Mode Active!');
+          setTimeout(() => location.reload(), 800);
+        } else {
+          showToast('Error: ' + (data.error || 'Failed to set mode'));
+        }
+      } catch (err) {
+        showToast('Network error: ' + err.message);
+      }
+    }
+
+    async function clearOverride() {
+      try {
+        const res = await fetch('/api/admin/override', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ mode: 'clear' })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Radar resumed to automatic Home Assistant detection!');
+          setTimeout(() => location.reload(), 800);
+        } else {
+          showToast('Error: ' + (data.error || 'Failed to clear override'));
+        }
+      } catch (err) {
+        showToast('Network error: ' + err.message);
+      }
+    }
+
+    async function submitManualPub(e) {
+      e.preventDefault();
+      const pubName = document.getElementById('customPubName').value.trim();
+      const pubAddress = document.getElementById('customPubAddress').value.trim();
+      const arrivedAt = document.getElementById('arrivedAtInput').value.trim();
+      const notify = document.getElementById('notifySubscribers').checked;
+
+      if (!pubName) {
+        showToast('Please enter a pub name');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/admin/override', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            mode: 'manual_pub',
+            pub_name: pubName,
+            pub_address: pubAddress,
+            arrived_at: arrivedAt,
+            notify: notify
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Manual pub override set: ' + pubName);
+          setTimeout(() => location.reload(), 800);
+        } else {
+          showToast('Error: ' + (data.error || 'Failed to set pub'));
+        }
+      } catch (err) {
+        showToast('Network error: ' + err.message);
+      }
+    }
+
+    async function sendTestEmail(e) {
+      e.preventDefault();
+      const email = document.getElementById('testEmailInput').value.trim();
+      if (!email) return;
+
+      try {
+        const res = await fetch('/api/admin/test-alert', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ to: email })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Test alert email sent to ' + email + '!');
+        } else {
+          showToast('Failed to send test email: ' + (data.error || 'Unknown error'));
+        }
+      } catch (err) {
+        showToast('Network error: ' + err.message);
+      }
+    }
+
+    function urlBase64ToUint8Array(base64String) {
+      const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+      const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+      const rawData = window.atob(base64);
+      const outputArray = new Uint8Array(rawData.length);
+      for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+      }
+      return outputArray;
+    }
+
+    async function triggerTestPush() {
+      const btn = document.getElementById('btnTestPush');
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        showToast('Push notifications not supported on this browser');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = 'Requesting push permission...';
+
+      try {
+        const reg = await navigator.serviceWorker.register('/sw.js');
+        await navigator.serviceWorker.ready;
+
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') {
+          showToast('Notification permission denied');
+          btn.disabled = false;
+          btn.innerText = '🔔 Send Test Push To My Browser →';
+          return;
+        }
+
+        btn.innerText = 'Getting VAPID key...';
+        const keyRes = await fetch('/api/push/vapid-public-key');
+        const keyData = await keyRes.json();
+        if (!keyData.public_key) {
+          throw new Error('VAPID key unavailable');
+        }
+
+        btn.innerText = 'Subscribing device...';
+        let sub = await reg.pushManager.getSubscription();
+        if (!sub) {
+          sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(keyData.public_key)
+          });
+        }
+
+        const subJson = sub.toJSON();
+
+        btn.innerText = 'Dispatching test push...';
+        const testRes = await fetch('/api/admin/test-push', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            endpoint: subJson.endpoint,
+            keys: subJson.keys,
+            pub: 'The Grandview'
+          })
+        });
+        const resData = await testRes.json();
+        if (resData.success) {
+          showToast('★ Push dispatched! Check your notification banner.');
+        } else {
+          showToast('Failed to dispatch push: ' + (resData.error || 'unknown'));
+        }
+      } catch (err) {
+        showToast('Push error: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = '🔔 Send Test Push To My Browser →';
+      }
+    }
+
+    async function removeSubscriber(id) {
+      if (!confirm('Deactivate this subscriber?')) return;
+      try {
+        const res = await fetch('/api/admin/subscribers/unsubscribe', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ id: id })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Subscriber deactivated');
+          setTimeout(() => location.reload(), 600);
+        } else {
+          showToast('Error: ' + (data.error || 'Failed to deactivate'));
+        }
+      } catch (err) {
+        showToast('Network error: ' + err.message);
+      }
+    }
+  </script>
+</body>
+</html>

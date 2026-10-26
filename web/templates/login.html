@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Cam's Dashboard Login - whereis.cam</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="preload" href="/static/fonts/calistoga-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/static/fonts/josefinsans-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    .login-box {
+      max-width: 440px;
+      margin: 40px auto;
+      width: 100%;
+    }
+    .login-title {
+      font-family: var(--font-chunky-serif);
+      font-size: 1.8rem;
+      color: var(--burnt-orange);
+      margin: 12px 0 6px;
+      text-align: center;
+    }
+    .login-subtitle {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    .form-label {
+      display: block;
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--mission-brown);
+      margin-bottom: 6px;
+    }
+    .form-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 3px solid var(--mission-brown-dark);
+      border-radius: var(--radius-inner);
+      font-family: var(--font-sans);
+      font-size: 1.1rem;
+      background: var(--bg-plaque-inner);
+      color: var(--text-dark);
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .form-input:focus {
+      border-color: var(--burnt-orange);
+      box-shadow: 0 0 0 4px var(--burnt-orange-glow);
+    }
+    .btn-login {
+      width: 100%;
+      padding: 14px 20px;
+      background: var(--burnt-orange);
+      color: var(--text-light);
+      border: 3px solid var(--mission-brown-dark);
+      border-radius: var(--radius-pill);
+      font-family: var(--font-sans);
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 4px 0 var(--mission-brown-dark);
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+    .btn-login:hover {
+      background: var(--burnt-orange-light);
+    }
+    .btn-login:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 var(--mission-brown-dark);
+    }
+    .login-error {
+      background: rgba(186, 63, 12, 0.12);
+      border: 2px solid var(--burnt-orange);
+      color: var(--burnt-orange-dark);
+      padding: 10px 14px;
+      border-radius: var(--radius-inner);
+      font-size: 0.9rem;
+      margin-bottom: 18px;
+      text-align: center;
+      font-weight: 600;
+    }
+    .back-link {
+      display: inline-block;
+      margin-top: 20px;
+      color: var(--text-muted);
+      text-decoration: underline;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .back-link:hover {
+      color: var(--burnt-orange);
+    }
+  </style>
+</head>
+<body>
+  <div class="grain-overlay" aria-hidden="true"></div>
+
+  <main class="saloon-container login-box">
+    <div class="card">
+      <div class="screw-rivet screw-tl" aria-hidden="true"></div>
+      <div class="screw-rivet screw-tr" aria-hidden="true"></div>
+      <div class="screw-rivet screw-bl" aria-hidden="true"></div>
+      <div class="screw-rivet screw-br" aria-hidden="true"></div>
+
+      <div class="saloon-crest">
+        <div class="crest-ornament top-ornament" aria-hidden="true"></div>
+        <div class="crest-title-group">
+          <span class="crest-star">&starf;</span>
+          <span class="crest-title">whereis.cam</span>
+          <span class="crest-star">&starf;</span>
+        </div>
+        <div class="crest-ornament bottom-ornament" aria-hidden="true"></div>
+      </div>
+
+      <h1 class="login-title">Cam's Dashboard</h1>
+      <p class="login-subtitle">Enter saloon passcode to manage radar & stats</p>
+
+      {{if .Error}}
+        <div class="login-error">{{.Error}}</div>
+      {{end}}
+
+      <form method="POST" action="/dashboard/login">
+        <div class="form-group">
+          <label for="password" class="form-label">Saloon Passcode</label>
+          <input type="password" id="password" name="password" class="form-input" placeholder="Enter password" autofocus required>
+        </div>
+        <button type="submit" class="btn-login">Open Command Saloon &rarr;</button>
+      </form>
+
+      <div style="text-align: center;">
+        <a href="/" class="back-link">&larr; Back to Public Radar</a>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

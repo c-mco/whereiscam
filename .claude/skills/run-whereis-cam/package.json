@@ -1,0 +1,8 @@
+{
+  "name": "run-whereis-cam-driver",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "playwright": "1.57.0"
+  }
+}

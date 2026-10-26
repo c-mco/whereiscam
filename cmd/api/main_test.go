@@ -70,7 +70,7 @@ func TestAppIntegration(t *testing.T) {
 	hassClient := homeassistant.NewClient(cfg.HassURL, cfg.HassToken, cfg.CacheTTL)
 	detector := pub.NewDetector(cfg.PersonEntity, cfg.PubZones, cfg.PubIconKeywords)
 
-	server, err := handlers.NewServer(hassClient, detector, nil, nil)
+	server, err := handlers.NewServer(hassClient, detector, nil, nil, nil, "cam")
 	if err != nil {
 		t.Fatalf("handlers.NewServer failed: %v", err)
 	}

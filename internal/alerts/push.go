@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -89,8 +91,41 @@ func (ps *PushService) VAPIDPublicKey() string {
 	return ps.vapidPub
 }
 
+// pushServiceHosts are the browser vendors' Web Push gateways. Endpoints are
+// supplied by clients, so anything else is refused to avoid SSRF.
+var pushServiceHosts = []string{
+	"fcm.googleapis.com",
+	"android.googleapis.com",
+	"updates.push.services.mozilla.com",
+	"push.services.mozilla.com",
+	".push.apple.com",
+	".notify.windows.com",
+}
+
+// ValidatePushEndpoint checks that endpoint is an https URL on a known push gateway.
+func ValidatePushEndpoint(endpoint string) error {
+	u, err := url.Parse(strings.TrimSpace(endpoint))
+	if err != nil || u.Scheme != "https" || u.Host == "" || u.Port() != "" || u.User != nil {
+		return fmt.Errorf("invalid push endpoint")
+	}
+	host := strings.ToLower(u.Hostname())
+	for _, allowed := range pushServiceHosts {
+		if strings.HasPrefix(allowed, ".") {
+			if strings.HasSuffix(host, allowed) {
+				return nil
+			}
+		} else if host == allowed {
+			return nil
+		}
+	}
+	return fmt.Errorf("push endpoint host %q is not a recognised push service", host)
+}
+
 // Subscribe stores or updates a push subscription in SQLite.
 func (ps *PushService) Subscribe(endpoint, p256dh, auth string) error {
+	if err := ValidatePushEndpoint(endpoint); err != nil {
+		return err
+	}
 	return ps.db.SavePushSubscription(endpoint, p256dh, auth)
 }
 
@@ -191,4 +226,56 @@ func (ps *PushService) BroadcastPubAlert(pubName, arrivedAt, url string) {
 		Body:  fmt.Sprintf("First pot poured at %s. Tap to join him!", arrivedAt),
 		URL:   url,
 	})
+}
+
+// SendDirect sends a targeted push notification directly to an individual subscription.
+func (ps *PushService) SendDirect(endpoint, p256dh, auth string, payload PushPayload) error {
+	if err := ValidatePushEndpoint(endpoint); err != nil {
+		return err
+	}
+	if payload.Icon == "" {
+		payload.Icon = "/static/favicon.svg"
+	}
+	if payload.Badge == "" {
+		payload.Badge = "/static/favicon.svg"
+	}
+	if payload.URL == "" {
+		payload.URL = "/"
+	}
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal push payload: %w", err)
+	}
+
+	ps.mu.RLock()
+	pubKey := ps.vapidPub
+	privKey := ps.vapidPriv
+	email := ps.contactEmail
+	ps.mu.RUnlock()
+
+	wpSub := &webpush.Subscription{
+		Endpoint: endpoint,
+		Keys: webpush.Keys{
+			P256dh: p256dh,
+			Auth:   auth,
+		},
+	}
+
+	resp, err := webpush.SendNotification(payloadBytes, wpSub, &webpush.Options{
+		Subscriber:      "mailto:" + email,
+		VAPIDPublicKey:  pubKey,
+		VAPIDPrivateKey: privKey,
+		TTL:             120,
+	})
+	if err != nil {
+		return fmt.Errorf("push dispatch error: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("push gateway rejected with HTTP %d", resp.StatusCode)
+	}
+
+	return nil
 }

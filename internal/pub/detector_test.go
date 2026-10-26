@@ -301,3 +301,17 @@ func TestDetectorWalkByFilteredOut(t *testing.T) {
 		t.Errorf("expected pub The Vic, got %v", confirmedStatus.Pub)
 	}
 }
+
+func TestResolvePubAddress(t *testing.T) {
+	cases := map[string]string{
+		"The Vic":      "280 Victoria St, Brunswick",
+		"Inner North":  "10A Russell St, Brunswick",
+		"Rocky Ridge":  "130 Barkly St, Brunswick East",
+		"Some New Pub": "Some New Pub, Brunswick VIC",
+	}
+	for name, want := range cases {
+		if got := ResolvePubAddress(name); got != want {
+			t.Errorf("ResolvePubAddress(%q) = %q, want %q", name, got, want)
+		}
+	}
+}

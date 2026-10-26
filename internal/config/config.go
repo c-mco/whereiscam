@@ -11,10 +11,13 @@ import (
 
 // Config holds runtime configuration for whereis.cam.
 type Config struct {
-	HassURL         string
-	HassToken       string
-	PersonEntity    string
-	Port            string
+	HassURL      string
+	HassToken    string
+	PersonEntity string
+	Port         string
+	// BindAddr is the interface to listen on; empty means all interfaces.
+	// Set to 127.0.0.1 when only a local reverse proxy should reach the app.
+	BindAddr        string
 	CacheTTL        time.Duration
 	PubZones        []string
 	PubIconKeywords []string
@@ -26,6 +29,10 @@ type Config struct {
 	VAPIDKeysPath   string
 	MinDwellTime    time.Duration
 	DBPath          string
+	AdminPassword   string
+	// TrustedProxies lists IPs or CIDRs of reverse proxies (e.g. Authelia) whose
+	// Remote-User and client-IP headers are honoured. Empty means trust none.
+	TrustedProxies []string
 }
 
 // Load reads configuration from environment variables, optionally loading from
@@ -39,6 +46,7 @@ func Load() (*Config, error) {
 		HassToken:       getEnv("HASS_TOKEN", ""),
 		PersonEntity:    getEnv("PERSON_ENTITY", "person.cam"),
 		Port:            getEnv("PORT", "8080"),
+		BindAddr:        getEnv("BIND_ADDR", ""),
 		CacheTTL:        15 * time.Second,
 		PubIconKeywords: []string{"glass", "beer", "mug", "wine", "pub", "bar", "cocktail", "liquor"},
 		ResendAPIKey:    getEnv("RESEND_API_KEY", ""),
@@ -49,6 +57,7 @@ func Load() (*Config, error) {
 		VAPIDKeysPath:   getEnv("VAPID_KEYS_PATH", "data/vapid_keys.json"),
 		MinDwellTime:    5 * time.Minute,
 		DBPath:          getEnv("DB_PATH", "data/whereiscam.db"),
+		AdminPassword:   getEnv("ADMIN_PASSWORD", getEnv("DASHBOARD_PASSWORD", "")),
 	}
 
 	if ttlStr := os.Getenv("CACHE_TTL_SECONDS"); ttlStr != "" {
@@ -63,6 +72,10 @@ func Load() (*Config, error) {
 
 	if keywordsStr := os.Getenv("PUB_ICON_KEYWORDS"); keywordsStr != "" {
 		cfg.PubIconKeywords = splitAndTrim(keywordsStr, ",")
+	}
+
+	if proxiesStr := os.Getenv("TRUSTED_PROXIES"); proxiesStr != "" {
+		cfg.TrustedProxies = splitAndTrim(proxiesStr, ",")
 	}
 
 	// Clean trailing slash from HassURL

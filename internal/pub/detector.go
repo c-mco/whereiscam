@@ -343,6 +343,12 @@ func formatClockTime(t time.Time) string {
 	return t.In(melbourneLoc).Format("3:04 PM MST")
 }
 
+// FormatClockTime renders t as a Melbourne wall-clock time with zone label
+// (e.g. "7:30 PM AEDT"), matching the detector's own arrival times.
+func FormatClockTime(t time.Time) string {
+	return formatClockTime(t)
+}
+
 // ResolvePubAddress returns the street address for known Brunswick pubs or a sensible fallback.
 func ResolvePubAddress(name string) string {
 	lower := strings.ToLower(strings.TrimSpace(name))
@@ -357,6 +363,10 @@ func ResolvePubAddress(name string) string {
 		return "109 Union St, Brunswick"
 	case strings.Contains(lower, "the vic") || strings.Contains(lower, "victoria hotel"):
 		return "280 Victoria St, Brunswick"
+	case strings.Contains(lower, "inner north"):
+		return "10A Russell St, Brunswick"
+	case strings.Contains(lower, "rocky ridge"):
+		return "130 Barkly St, Brunswick East"
 	default:
 		return name + ", Brunswick VIC"
 	}
@@ -366,4 +376,9 @@ func ResolvePubAddress(name string) string {
 // before confirming they are at the pub (filtering out walk-bys).
 func (d *Detector) SetMinDwellTime(dur time.Duration) {
 	d.minDwellTime = dur
+}
+
+// PersonEntity returns the configured entity ID being tracked.
+func (d *Detector) PersonEntity() string {
+	return d.personEntity
 }
