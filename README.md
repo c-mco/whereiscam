@@ -4,16 +4,16 @@ Find out which pub Cam is at in real time, powered by Home Assistant.
 
 If Cam is at a pub, the website announces the venue, physical street address, time of first pour, and provides an instant app chooser for turn-by-turn directions. If he's not at a pub, it lets mates know: **"Cam's not at a pub. Weird."**
 
-Styled with an authentic **1973 Brunswick Art Deco Saloon Bar** aesthetic — heavy timber bullnose plaque framing, nicotine cream enamel, burnt orange vinyl, mustard yellow coasters, slotted brass corner rivets, and 100% emoji-free custom retro vector iconography.
+Styled with an authentic **70s Art Deco Saloon Bar** aesthetic — heavy timber bullnose plaque framing, nicotine cream enamel, burnt orange vinyl, mustard yellow coasters, slotted brass corner rivets, and 100% emoji-free custom retro vector iconography.
 
 ---
 
 ## Features
 
-- 📍 **Home Assistant Integration**: Connects directly to `fitz.itspartyti.me` via REST API with in-memory TTL caching.
+- 📍 **Home Assistant Integration**: Connects directly to a Home Assistant instance via REST API with in-memory TTL caching.
 - 🍻 **Zero-Config Dynamic Pub Discovery**: Discovers drinking zones dynamically in Home Assistant via drink/glass icons, pub/brewery keywords, and zone radii.
 - 🏛️ **1973 Art Deco Saloon Aesthetic**:
-  - Handcrafted slotted brass corner screws, routered gold pinstripes, and vintage cardboard beer coaster frames.
+  - Handcrafted slotted brass corner screws, gold pinstripes, and vintage cardboard beer coaster frames.
   - **100% Emoji-Free**: Every icon is a custom retro SVG.
   - **Embedded SVG Sprite Sheet**: All vector icons are inlined directly in the HTML payload — **0 HTTP network hops, 0ms pop-in delay**.
   - **Self-Hosted Typography**: Zero third-party font calls (`Calistoga` and `Josefin Sans` served locally as WOFF2).
@@ -100,12 +100,12 @@ Set your configuration in `.env` (or via environment variables):
 
 ```env
 # Home Assistant REST API
-HASS_URL=https://fitz.itspartyti.me
+HASS_URL=https://homeAssistant.example.com
 HASS_TOKEN=your_long_lived_access_token_here
-PERSON_ENTITY=person.cam
+PERSON_ENTITY=person.name
 
 # HTTP Server
-PORT=8092
+PORT=8080
 CACHE_TTL_SECONDS=15
 
 # Storage (SQLite)
@@ -116,10 +116,6 @@ RESEND_API_KEY=re_...
 RESEND_FROM=alerts@whereis.cam
 BASE_URL=https://whereis.cam
 
-# Optional Legacy JSON Paths (for auto-migration to SQLite)
-SUBSCRIBERS_PATH=data/subscribers.json
-PUSH_SUBS_PATH=data/push_subscriptions.json
-VAPID_KEYS_PATH=data/vapid_keys.json
 ```
 
 ---
